@@ -1780,7 +1780,7 @@ if(do_photo){
     if(nam == "Mismatch"){
       minmm <- round(min(df$value/1000), 1) - .1
       df$value <- df$value / 1000
-      if(minmm <= -4){
+      if(minmm < -4){
         mmbrk <- c(minmm, -4, -3, -2, -1, 0, .25, .5, .75, 1)
         df$value <- cut(df$value, mmbrk)
         cols <- setNames(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
