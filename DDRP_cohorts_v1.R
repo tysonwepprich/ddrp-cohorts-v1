@@ -11,12 +11,12 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "purrr", "RColorBrewer", "rgdal", "raster", "readr", "sp", "stringr", 
           "tidyr", "tictoc", "tools", "viridis")
 ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library, 
-              lib.loc = "/usr/lib64/R/library/", character.only = TRUE))))
+              lib.loc = "/usr/local/lib64/R/library/", character.only = TRUE))))
 
 # Load collection of functions for this model
 # source("/usr/local/dds/DDRP_B1/DDRP_cohorts_v1_funcs.R")
-source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R")
-
+# source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R")
+source("/usr/local/dds/DDRP_DOD/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R")
 
 # Bring in states feature for summary maps (PNG files)
 # Requires these libraries: "mapdata" and "maptools"
@@ -155,7 +155,8 @@ if (!is.na(opts[1])) {
 
 #### * Param inputs - species params; thresholds, weather, etc. ####
 # params_dir <- "/usr/local/dds/DDRP_B1/spp_params/"
-params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/"
+# params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/"
+params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/"
 
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
 # If outdir has 2 consec. numbers, assume webuser; otherwise just use base dir
@@ -175,9 +176,8 @@ cat("\nWORKING DIR: ", prism_dir, "\n")
 
 # output_dir <- paste0("/home/httpd/html/CAPS/",spp, "_cohorts")
 # output_dir <- paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir)
-output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
-                     out_dir,"/")
-
+# output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/", out_dir,"/")
+output_dir <- paste0("/home/httpd/html/dodtmp/", out_dir)
 
 # Remove all files if output_dir exists, or else create output_dir
 if (file.exists(output_dir)) {
@@ -213,8 +213,7 @@ cat(str_wrap(paste0("EXISTING OUTPUT DIR: ", output_dir,
 #open="wt")
 # msg <- file(paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir, 
                    # "/Logs_metadata/rmessages.txt"), open = "wt")
-msg <- file(paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
-                   out_dir,"/rmessages.txt"), open="wt")
+msg <- file(paste0("/home/httpd/html/dodtmp/", out_dir, "/rmessages.txt"), open="wt")
 
 sink(msg, type = "message")
 
@@ -1780,7 +1779,7 @@ if(do_photo){
     if(nam == "Mismatch"){
       minmm <- round(min(df$value/1000), 1) - .1
       df$value <- df$value / 1000
-      if(minmm <= -4){
+      if(minmm < -4){
         mmbrk <- c(minmm, -4, -3, -2, -1, 0, .25, .5, .75, 1)
         df$value <- cut(df$value, mmbrk)
         cols <- setNames(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
