@@ -1,5 +1,5 @@
 # Functions used for DDRP_cohorts_v1 R----
-# Last modified on 11/01/19
+# Last modified on 10/30/19: Modified labels for NumGen, Lifestage by Gen
 
 #### (1). Assign_extent: assign geographic extent ####
 # Add new extent definitions here for use in models and plots
@@ -1237,25 +1237,25 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
       theme_map(base_size = base_size) + 
       mytheme
 
-    #### * Number of generations - relative pop size by gen ####
+    #### * Number of generations ####
   } else if (grepl("NumGen|NumGen_Excl1|NumGen_Excl2", outfl)) {
     # Caption for logging file
       if (grepl("NumGen_Excl1|NumGen_Excl2", outfl)) { 
         log_capt <- paste("-", 
-          str_wrap("Relative pop. size of each gen. with climate stress excl. 
+          str_wrap("Number of gens. with climate stress excl. 
                    on", width = 80),
           format(as.Date(d, "%Y%m%d"), "%m/%d/%Y"))
       } else {
-        log_capt <- paste("-", "Rel. population size of each generation on", 
+        log_capt <- paste("-", "Numbers of generations on", 
                              format(as.Date(d, "%Y%m%d"), "%m/%d/%Y"))
       }
     
     # If no data besides Gen0, then make entire map gray
     if (all(df$value == 0)) {
-      df$value <- "GenOW"
+      df$value <- "0 gens."
       df$value <- factor(df$value)
       cols <- "mediumblue"
-      cols <- setNames(as.character(cols), "GenOW") 
+      cols <- setNames(as.character(cols), "0 gens.") 
       # Make the plot
       p <- Base_map(df) +
         scale_fill_manual(values = cols, name = str_wrap(paste0(lgd), 
@@ -1314,28 +1314,15 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
                                   ifelse(value < 60, 40, ifelse(value < 80, 60, 
                                   ifelse(value < 100, 80, value))))))
           df$value <- paste0(df$gen, ": ", df$value)
-          gens_df <- data.frame("value" = unique(df$gen), 
-                                "x" = NA, "y" = NA, "gen" = unique(df$gen))
-          # Make column for sorting gens correctly for map legend
-          gens_df$sorting <- as.numeric(gsub("Gen", "", gens_df$value) %>% 
-                                          gsub("OW", "0", .)) 
-          gens_df$value <- factor(gens_df$value, 
-                  levels = gens_df$value[order(gens_df$sorting, gens_df$value)])
-          df <- rbind(df, dplyr::select(gens_df,-sorting))
           df$value <- factor(df$value, 
-                             levels = unique(df$value[order(df$gen, df$value)]))
-        
+                        levels = unique(df$value[order(df$gen_num, df$value)]))
+          df$gen <- factor(df$gen, 
+                             levels = unique(df$gen[order(df$gen_num, df$gen)]))
+          
         # If data has climate stress exclusion values (AdultExcl1_byGen or 
         # AdultExcl2_byGen), but not all values are climate stress exclusions
         } else if (any(df$value < 0)) {
           if (any(df$value > 0)) {
-            gens_df <- data.frame("value" = unique(df$gen), 
-                                  "x" = NA, "y" = NA, "gen" = unique(df$gen))
-            # Make column for sorting gens correctly for map legend
-            gens_df$sorting <- as.numeric(gsub("Gen", "", 
-                                        gens_df$value) %>% gsub("OW", "0", .)) 
-            gens_df$value <- factor(gens_df$value, 
-              levels = gens_df$value[order(gens_df$sorting, gens_df$value)])
             df2 <- dplyr::filter(df, !value < 0) # need to remove -2 and -1 vals
             df2 <- mutate(df2, value = ifelse(value < 20, 0, 
                                        ifelse(value < 40, 20, 
@@ -1343,11 +1330,7 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
                                        ifelse(value < 80, 60, 
                                        ifelse(value < 100, 80, value))))))
             df2$value <- paste0(df2$gen, ": ", df2$value)
-            # Combine gens_df with data - now can have gens displayed 
-            # correctly in map legend
-            df2 <- rbind(df2, dplyr::select(gens_df, -sorting))
-            df2$value <- factor(df2$value, 
-              levels = unique(df2$value[order(df2$gen, df2$value)]))
+
             # Recode exclusion values
             excl_df <- df %>% dplyr::filter(value < 0) # take only -2 and -1
             excl_df <- mutate(excl_df, 
@@ -1355,30 +1338,28 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
                                       ifelse(value == -1, "excl.-moderate", 
                                              value)))
             excl_df$value <- factor(excl_df$value)
+            
             # Recombine the processed data frames
-            # put exlcusion values and Lifestage rel. pop size (binned) values
+            # put exlcusion values and rel. pop size (binned) values
             # back together
             df3 <- rbind(excl_df, df2) 
             df <- df3 # rename dataframe
+            df$value <- factor(df$value, 
+                        levels = unique(df$value[order(df$gen_num, df$value)]))
+            df$gen <- factor(df$gen, 
+                             levels = unique(df$gen[order(df$gen_num, df$gen)]))
             
             # If all values are 0
           } else if (all(df$value == 0)) {
             df <- mutate(df, value = ifelse(value == -2, "excl.-severe", 
                                      ifelse(value == -1, "excl.-moderate", 
-                                     ifelse(value == 0, "GenOW: 0", value))))
-            gens_df <- data.frame("value" = unique(df$gen), "x" = NA, "y" = NA,
-                                  "gen" = unique(df$gen))
-            # Make column for sorting gens correctly for map legend
-            gens_df$sorting <- as.numeric(gsub("Gen", "", gens_df$value) %>% 
-                                            gsub("OW", "0", .)) 
-            # Combine gens_df with data - now can have gens displayed 
-            # correctly in map legend
-            gens_df$value <- factor(gens_df$value, 
-                  levels = gens_df$value[order(gens_df$sorting, gens_df$value)])
-            df <- rbind(df, dplyr::select(gens_df, -sorting)) 
+                                     ifelse(value == 0, "0 gens.", value))))
             # Order by original values so plots in numerical order
             df$value <- factor(df$value, 
-                  levels = unique(df$value[order(df$value)])) 
+                               levels = unique(df$value[order(df$gen_num, 
+                                                              df$value)]))
+            df$gen <- factor(df$gen, 
+                             levels = unique(df$gen[order(df$gen_num, df$gen)]))
           } 
         }
         
@@ -1394,42 +1375,48 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
           Colfunc("lightblue4", "lightblue1", 5), 
           Colfunc("lightpink", "deeppink4", 5), 
           Colfunc("slateblue1", "slateblue4", 5)))
-        weeks_df <- data.frame(gen = c(rep("OW", 5), rep(1, 5), rep(2, 5),
+        weeks_df <- data.frame(gen = c(rep(0, 5), rep(1, 5), rep(2, 5),
           rep(3, 5), rep(4, 5), rep(5, 5), rep(6, 5), rep(7, 5), rep(8, 5), 
           rep(9, 5), rep(10, 5), rep(11, 5), rep(12, 5)))
+        weeks_df$gen <- paste(weeks_df$gen, "gens.")
         col_key <- cbind(cols_df, weeks_df)
-        col_key$gen <- paste0("Gen", col_key$gen)
-        col_key2 <- semi_join(col_key, df, by = "gen") 
+        col_key2 <- suppressWarnings(semi_join(col_key, df, by = "gen"))
         # Create bins of 5 to represent abundance of adults 
         # (0 to 100, or just 0 if OWGen)
         col_key2 <- data.frame(col_key2 %>% group_by(gen) %>% 
                                  mutate(value = c(0, 20, 40, 60, 80)))
         col_key2$value <- paste0(col_key2$gen, ": ", col_key2$value)
+        
         # For legend, show only one color for each generation 
         # (map will have a gradation of this color)
         # Color for bin value 20 is used for legend (an intermediate color)
         leg_cols <- col_key2 %>% dplyr::filter(grepl(": 60", value))
-        #leg_cols <- rbind(data.frame("cols"=c("mediumblue"),
-        #"gen" = c("GenOW"), "value"=c("GenOW")), leg_cols)
         leg_cols$value <- str_split_fixed(leg_cols$value, 
                                           pattern = ":", 2)[,1] # Which gen?
         # Bind actual colors and legend colors together and create a named 
         # vector of these
         col_key2 <- rbind(leg_cols, col_key2)
-        # Create legeng breaks to use in plotting function, so only one shade 
-        # per gen is shown in legend. Must add "GenOW" separately because isn't 
-        # sorted correctly
-        lgnd_brks <- data.frame("gen" = gens_df$value)
-        # if (any(grep("GenOW", col_key2))) {
-        #   lgnd_brks <- lgnd_brks %>% dplyr::filter(gen!="GenOW")
-        #   lgnd_brks <- rbind(data.frame("gen" = c(as.character("GenOW"))),
-        #   lgnd_brks)
-        # }
         
+        # Create legend breaks to use in plotting function, so only one shade 
+        # per gen is shown in legend.
+        # Create a fake data frame and attach to real data in order to create
+        # a custom legend that shows only gens in the fake on
+        gens_df <- data.frame("value" = unique(df$gen),"x" = NA, "y" = NA, 
+                              "gen" = unique(df$gen), 
+                              "gen_num" = unique(df$gen_num))
+        gens_df <- arrange(gens_df, gen_num)
+        lgnd_brks <- data.frame("gen" = gens_df$gen) # Legend breaks to use
+        
+        # Attach the fake data to the real data, and set factor levels according
+        # to generation numbers to they are sorted correctly in legend
+        df <- rbind(df, gens_df)
+        df$value <- factor(df$value, 
+                        levels = unique(df$value[order(df$gen_num, df$value)]))
+         
         # Add grayscale colors to legend colors if climate stress exclusions
         # Moderate stress exclusion
         if (any(df$value == "excl.-moderate")) {
-          col_key2 <- rbind(data.frame("cols" = "gray70", "gen" = NA,
+          col_key2 <- rbind(data.frame("cols" = "gray70", "gen" = NA, 
                                        "value" = "excl.-moderate"), col_key2)
           lgnd_brks <- rbind(
             data.frame("gen" = c(as.character("excl.-moderate"))), lgnd_brks)
@@ -1442,12 +1429,12 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
             data.frame("gen" = c(as.character("excl.-severe"))), lgnd_brks)
         }
         
-        # Define legend breaks, create lgd. color vector, and plot
-        lgnd_brks <- sort(dplyr::pull(lgnd_brks, gen))
+        # Convert legend breaks to vector, create lgd. color vector, and plot
+        lgnd_brks <- as.vector(lgnd_brks$gen)
         cols <- setNames(as.character(col_key2$cols), col_key2$value) 
         p <- Base_map(df) + 
           scale_fill_manual(values = cols, breaks = lgnd_brks, 
-                            name = str_wrap(paste0(lgd), width = 15)) +
+                             name = str_wrap(paste0(lgd), width = 15)) +
           labs(title = str_wrap(paste(sp, titl), width = titl_width), 
                subtitle = str_wrap(subtitl, width = subtitl_width)) +
           theme_map(base_size = base_size) + 
@@ -1480,10 +1467,10 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
       theme(legend.text = element_text(size = rel(1.5)), 
             legend.title = element_text(size = rel(1.4), face = "bold"))
       
-    #### * Lifestage (currently adults) by generation maps ####
+    #### * Lifestage (currently adults) w/ NumGen maps ####
   } else if (grepl("Adult_byGen|Adult_Excl1_byGen|Adult_Excl2_byGen", outfl)) {
     # Caption for log file
-    log_capt <- paste("-", "Relative pop. size of adults of each generation on", 
+    log_capt <- paste("-", "Relative pop. size of adults for each gen. on", 
                       format(as.Date(d, "%Y%m%d"), "%m/%d/%Y"))
     df$gen <- as.numeric(df$gen) # Generation column must be numeric
     
@@ -1547,13 +1534,11 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
                                  ifelse(value < 60, 40, 
                                  ifelse(value < 80, 60, 
                                  ifelse(value < 100, 80, value)))))))
-        df$value <- paste0("Gen", df$gen, ": ", df$value)
-        df$value <- gsub("Gen0", "GenOW", df$value)
+        df$value <- paste(df$gen, "gens.:", df$value)
         df <- mutate(df, value = ifelse(grepl(": 0", value), 
                                         "other stages", value))
-        gens_df <- data.frame("value" = paste0("Gen", unique(df$gen)), 
+        gens_df <- data.frame("value" = paste(unique(df$gen), "gens."), 
                               "x" = NA, "y" = NA, "gen" = unique(df$gen))
-        gens_df$value <- gsub("Gen0", "GenOW", gens_df$value)
         df <- rbind(df, gens_df)
         df$value <- factor(df$value, levels = 
                              unique(df$value[order(df$gen, df$value)]))
@@ -1571,17 +1556,14 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
                                      ifelse(value < 60, 40, 
                                      ifelse(value < 80, 60, 
                                      ifelse(value < 100, 80, value)))))))
-          df2$value <- paste0("Gen", df2$gen, ": ", df2$value)
-          df2$value <- gsub("Gen0", "GenOW", df2$value)
+          df2$value <- paste(df2$gen, "gens.:", df2$value)
           df2 <- mutate(df2, value = ifelse(grepl(": 0", value), 
-                                            "other stages", value))
-          gens_df <- data.frame("value" = paste0("Gen", unique(df$gen)), 
-                                "x" = NA, "y" = NA, "gen" = unique(df$gen))
-          gens_df$value <- gsub("Gen0", "GenOW", gens_df$value)
+                                          "other stages", value))
+          gens_df <- data.frame("value" = paste(unique(df2$gen), "gens."), 
+                                "x" = NA, "y" = NA, "gen" = unique(df2$gen))
           df2 <- rbind(df2, gens_df)
           df2$value <- factor(df2$value, levels = 
-                                unique(df2$value[order(df2$gen, df2$value)]))
-          
+                               unique(df2$value[order(df2$gen, df2$value)]))          
           # Recode exclusion values
           excl_df <- df %>% dplyr::filter(value < 0) # take only -2 and -1 vals
           excl_df <- mutate(excl_df, value = ifelse(value == -2, "excl.-severe", 
@@ -1624,17 +1606,22 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
       weeks_df <- data.frame(gen = c(rep(0, 5), rep(1, 5), rep(2, 5),
         rep(3, 5), rep(4, 5), rep(5, 5), rep(6, 5), rep(7, 5), rep(8, 5), 
         rep(9, 5), rep(10, 5), rep(11, 5), rep(12, 5)))
+      #weeks_df$gen <- paste(weeks_df$gen, "gens.")
       col_key <- cbind(cols_df, weeks_df)
       col_key2 <- semi_join(col_key, df, by = "gen") 
-      col_key2 <- mutate(col_key2, gen = ifelse(gen == 0, "OW", gen))
+      #col_key2 <- mutate(col_key2, gen = ifelse(gen == 0, "OW", gen))
       #col_key2$gen <- as.factor(col_key2$gen)
       # Create bins of 5 to represent abundance of adults 
       num_gens <- length(unique(col_key2$gen)) # how many unique gens in data?
       col_key2$value <- rep(c(1, 20, 40, 60, 80), num_gens) # give unique gen 5 bins
-      col_key2$value <- paste0("Gen", col_key2$gen, ": ", col_key2$value)
+      col_key2$value <- paste(col_key2$gen, "gens.:", col_key2$value)
+      col_key2$value <- factor(col_key2$value, 
+                        levels = unique(col_key2$value[order(col_key2$value)])) 
+      
+      #col_key2$value <- paste0("Gen", col_key2$gen, ": ", col_key2$value)
       # Add on a color for the "other stages" category
-      noAdults_col <- data.frame(cols = c("gray90"), gen = c("none"), 
-                                 value = "other stages")
+      noAdults_col <- data.frame(cols = c("gray90"), gen = NA, 
+                                 value = as.factor("other stages"))
       col_key2 <- rbind(noAdults_col, col_key2)
       
       # For legend, show only one color for each generation 
@@ -1651,12 +1638,12 @@ PlotMap <- function(r, d, titl, lgd, outfl) {
       
       # Add grayscale colors to legend colors if climate stress exclusions
       if (any(df$value == "excl.-moderate")) {
-        col_key2 <- rbind(data.frame("cols" = "gray70", "gen" = "none", 
+        col_key2 <- rbind(data.frame("cols" = "gray70", "gen" = NA, 
                                      "value" = "excl.-moderate"), col_key2)
         lgnd_brks <- append("excl.-moderate", lgnd_brks)
       }
       if (any(df$value == "excl.-severe")) {
-        col_key2 <- rbind(data.frame("cols" = "gray40", "gen" = "none",
+        col_key2 <- rbind(data.frame("cols" = "gray40", "gen" = NA,
                                      "value" = "excl.-severe"), col_key2)
         lgnd_brks <- append("excl.-severe", lgnd_brks)
       }
@@ -2080,7 +2067,6 @@ SplitRas <- function(raster, ppside, save, plot) {
   }
   return(r_list)
 }
-
 
 # Diapause functions
 

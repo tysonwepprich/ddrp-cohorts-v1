@@ -1,6 +1,6 @@
 #!/usr/bin/Rscript
 #.libPaths("/usr/lib64/R/library/")
-# Last modified on 10/16/19
+# Last modified on 10/30/19: changed labels for NumGen results
 
 # DDRP cohorots v. 1
 options(echo = FALSE)
@@ -90,7 +90,8 @@ option_list <- list(
   make_option(c("--out_dir"), type = "character", action = "store", 
               default = NA, help = "name of out directory"),
   make_option(c("--out_option"), type = "integer", action = "store", 
-              default = NA, help = "name of output directory"),
+              default = NA, help = "sampling frequency: 1 = 30 days; 
+              2 = 14 days; 3 = 10 days; 4 = 7 days; 5 = 2 days; 6 = 1 day"),
   make_option(c("--ncohort"), type = "integer", action = "store", 
               default = NA, help = "number of cohorts"),
   make_option(c("--odd_gen_map"), type = "numeric", action = "store", 
@@ -129,22 +130,22 @@ if (!is.na(opts[1])) {
   cp_sd <- opts$cp_sd
 } else {
   #### * Default values for params, if not provided in command line ####
-  spp           <- "APH" # Default species to use
+  spp           <- "STB" # Default species to use
   forecast_data <- "PRISM" # Forecast data to use (PRISM or NMME)
   start_year    <- 2018 # Year to use
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 1 # Should leap year be kept?
-  region_param  <- "OR" # Default REGION to use
-  exclusions_stressunits    <- 0 # Turn on/off climate stress unit exclusions
+  region_param  <- "ND" # Default REGION to use
+  exclusions_stressunits    <- 1 # Turn on/off climate stress unit exclusions
   pems          <- 0 # Turn on/off pest event maps
   mapA          <- 1 # Make maps for adult stage
   mapE          <- 1 # Make maps for egg stage
   mapL          <- 1 # Make maps for larval stage
   mapP          <- 1 # Make maps for pupal stage
-  out_dir       <- "APH_test" # Output dir (currently appended to /data/PRISM)
-  out_option    <- 1 # Output option category (*to be defined*)
-  ncohort       <- 5 # Number of cohorts to approximate end of OW stage
+  out_dir       <- "STB_test" # Output dir
+  out_option    <- 1 # Output option category
+  ncohort       <- 7 # Number of cohorts to approximate end of OW stage
   odd_gen_map   <- 0 # Create summary plots for odd gens only (gen1, gen3, ..)
   do_photo      <- 1 # Use photoperiod diapause modules in daily loop and results
   cp_mean       <- 14.1 # Critical photoperiod mean
@@ -154,9 +155,9 @@ if (!is.na(opts[1])) {
 # (2). DIRECTORY INIT ------
 
 #### * Param inputs - species params; thresholds, weather, etc. ####
-# params_dir <- "/usr/local/dds/DDRP_B1/spp_params/"
-# params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/"
-params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/"
+params_dir <- "/usr/local/dds/DDRP_B1/spp_params/"
+# params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/" # tyson's GRUB
+# params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/" # tyson's HOPPER
 
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
 # If outdir has 2 consec. numbers, assume webuser; otherwise just use base dir
@@ -174,10 +175,11 @@ cat("\nWORKING DIR: ", prism_dir, "\n")
 # MUST remove .tif files or script will crash during processing because it will 
 # try to analyze previously processed results. 
 
-# output_dir <- paste0("/home/httpd/html/CAPS/",spp, "_cohorts")
+output_dir <- paste0("/home/httpd/html/CAPS/",spp, "_cohorts")
 # output_dir <- paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir)
-# output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/", out_dir,"/")
-output_dir <- paste0("/home/httpd/html/dodtmp/", out_dir)
+# output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
+#                      out_dir,"/") # Tyson's GRUB
+# output_dir <- paste0("/home/httpd/html/dodtmp/", out_dir) # Tyson's HOPPER
 
 # Remove all files if output_dir exists, or else create output_dir
 if (file.exists(output_dir)) {
@@ -209,11 +211,12 @@ cat(str_wrap(paste0("EXISTING OUTPUT DIR: ", output_dir,
     file = Model_rlogging, append = TRUE)
 
 # Push out a message file with all R error messages
-#msg <- file(paste0("/home/httpd/html/CAPS/",out_dir, "/rmessages.txt"), 
-#open="wt")
+msg <- file(paste0("/home/httpd/html/CAPS/",out_dir, "/rmessages.txt"),
+            open="wt")
 # msg <- file(paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir, 
-                   # "/Logs_metadata/rmessages.txt"), open = "wt")
-msg <- file(paste0("/home/httpd/html/dodtmp/", out_dir, "/rmessages.txt"), open="wt")
+                   # "/Logs_metadata/rmessages.txt"), open = "wt") # GRUB
+# msg <- file(paste0("/home/httpd/html/dodtmp/", out_dir, 
+#                    "/rmessages.txt"), open="wt") # Tyson's HOPPER
 
 sink(msg, type = "message")
 
@@ -235,9 +238,9 @@ if (file.exists(species_params)) {
       file = Model_rlogging, append = TRUE)
   cat("\nReading params for species: ", spp, " Fullname: ", fullname, "\n")
 } else {
-  cat("Param file: ", species_params, "...Not found; exiting Program...\n", 
+  cat("Param file: ", species_params, "...not found; exiting program\n", 
       file = Model_rlogging, append = TRUE)
-  cat("\nParam file: ", species_params, "...Not found; exiting Program...\n")
+  cat("\nParam file: ", species_params, "...not found; exiting program\n")
   q()  # No reason to keep going without any params
 }
 
@@ -491,6 +494,11 @@ if (out_option == 1) {
 } else if (out_option == 6) {
   sample_freq <- 1 # Daily maps
   dats2 <- dats
+} else if (out_option %in% !c(1, 2, 3, 4, 5, 6)) {
+  cat("Error: out_option =", out_option, "is unacceptable; exiting program\n", 
+      file = Model_rlogging, append = TRUE)
+  cat("Error: out_option =", out_option, "is unacceptable; exiting program\n")
+  q()  # No reason to keep going if sampling freq is not correctly specified
 }
 
 # Make vector of dates to use when processing results - last day is added too
@@ -914,7 +922,7 @@ if (!pems & !exclusions_stressunits) {
                      ###", width = 80), "\n\nStages: ", 
       paste(stgorder, collapse = ", "), 
       sep = "", file = Model_rlogging, append = TRUE)
-  cat("\nSUMMARY MAPS AND WEIGHTED RASTER OUTPUT: LIFESTAGE ###", "\n\nStages: ",
+  cat("\nSUMMARY MAPS AND WEIGHTED RASTER OUTPUT: LIFESTAGE ###","\n\nStages: ",
       paste(stgorder, collapse = ", "), "\n")
   # If no PEMS but climate stress exclusions, then moving on to Lifestage 
   # analyses that also include climate stress exclusions
@@ -1037,7 +1045,7 @@ if (pems) {
         mean(x, na.rm = TRUE) }) # average in day of event among cohorts
       names(avg_PEM) <- "Avg" # name layer for use below
       SaveRaster2(avg_PEM, paste("Avg", type, last_date, sep = "_"), 
-                  "INT2U", paste("- Avg. date of", eventLabel))
+                  "INT2U", paste("- Avg.", eventLabel))
       PlotMap(avg_PEM, last_date, paste("Avg.", eventLabel, sep = " "), 
               paste("Avg.", eventLabel, sep = " "), 
               paste("Avg", type, sep = "_"))
@@ -1047,7 +1055,7 @@ if (pems) {
       min_PEM <- calc(pem_stk, fun = function(x, na.rm= TRUE) { min(x) })
       names(min_PEM) <- "Earliest" # name layer for use below
       SaveRaster2(min_PEM, paste("Earliest", type, last_date, sep = "_"), 
-                  "INT2U", paste("- Earliest date of", eventLabel))
+                  "INT2U", paste("- Earliest", eventLabel))
       PlotMap(min_PEM, last_date, paste("Earliest", eventLabel, sep = " "), 
               paste("Earliest", eventLabel, sep = " "), 
               paste("Earliest", type, sep = "_"))
@@ -1067,9 +1075,9 @@ if (pems) {
               
           # Save raster brick results; create and save summary maps
           SaveRaster2(PEM_excl1, paste0(nam, "_", type, "Excl1_", last_date), 
-                      "INT2U", paste("-", nam, eventLabel))
+                      "INT2S", paste("-", nam, eventLabel))
           SaveRaster2(PEM_excl2, paste0(nam, "_", type, "Excl2_", last_date), 
-                      "INT2U", paste("-", nam, eventLabel))
+                      "INT2S", paste("-", nam, eventLabel))
           PlotMap(PEM_excl1, last_date, paste0(nam, " ", eventLabel, 
                   " w/ climate stress exclusion"), paste0(nam, " ", eventLabel),
                   paste0(nam, "_", type, "Excl1"))
@@ -1194,11 +1202,11 @@ Wtd_Lfstg_others <-  foreach(stg = stage_list, .packages = pkgs,
       Lfstg_wtd_excl2_brk <- do.call(brick, Lfstg_wtd_excl2)
       SaveRaster2(Lfstg_wtd_excl1_brk, 
                   paste0("Misc_output/", stg_nam, "_Excl1"), 
-                  "INT2U", paste("-", stg_nam, "relative pop. size for all", 
+                  "INT2S", paste("-", stg_nam, "relative pop. size for all", 
                   nlayers(Lfstg_wtd_excl1_brk), "dates")) 
       SaveRaster2(Lfstg_wtd_excl2_brk, 
                   paste0("Misc_output/", stg_nam, "_Excl2"), 
-                  "INT2U", paste("-", stg_nam, "relative pop. size for all", 
+                  "INT2S", paste("-", stg_nam, "relative pop. size for all", 
                   nlayers(Lfstg_wtd_excl2_brk), "dates")) 
       
       # create and save summary maps of results
@@ -1314,310 +1322,312 @@ stopCluster(cl)
 # Lifestage cohort rasters now that they have been processed
 rm(list = ls(pattern = "Lfstg_wtd|Lfstg_incOW_wtd"))
 unlink(list.files(pattern = glob2rx(paste0("*Lifestage*cohort*"))))
-# 
-# #### * NumGen raster processing ####
-# NumGen_fls <- list.files(pattern = glob2rx("*NumGen_*.tif$"))
-# 
-# if (exclusions_stressunits) {
-#   NumGenExcl1_fls <- list.files(pattern = glob2rx("*NumGenExcl1*.tif$"))
-#   NumGenExcl2_fls <- list.files(pattern = glob2rx("*NumGenExcl2*.tif$"))
-# }
-# 
-# # Calculate the highest generation to occur across all NumGen bricks, 
-# # so can weight data from each
-# maxgens <- max(unlist(lapply(NumGen_fls, function(x) { maxValue(brick(x)) })))
-# 
-# # Log file messages
-# if (exclusions_stressunits) {
-#   cat("\n\n", str_wrap("Done with weighted raster outputs and summary maps for 
-#                        Lifestage, Lifestage_Excl1, and Lifestage_Excl2", 
-#                        width = 80), "\n\n", 
-#       str_wrap(paste("### WEIGHTED RASTER OUTPUT: NUMGEN WITH CLIMATE STRESS 
-#                      EXCL. FOR", maxgens, "GENS ###"), width = 80), sep = "", 
-#       file = Model_rlogging, append = TRUE) 
-#   cat("\n", str_wrap("Done with weighted raster outputs and summary maps for 
-#                        Lifestage, Lifestage_Excl1, and Lifestage_Excl2", 
-#                        width = 80), "\n", sep = "")
-#   cat("\nWEIGHTED RASTER OUTPUT: NUMGEN WITH CLIMATE STRESS EXCL. FOR", 
-#        maxgens, "GENS\n", sep = "")
-# } else {
-#   cat("\n\n", str_wrap("Done with weighted raster outputs and summary maps for 
-#                        Lifestage", width = 80), "\n\n", 
-#       "### WEIGHTED RASTER OUTPUT: NUMGEN FOR ", maxgens, 
-#       " GENERATIONS ###", sep = "", file = Model_rlogging, append = TRUE) 
-#   cat("\n", str_wrap("Done with weighted raster outputs and summary maps for 
-#                        Lifestage", width = 80), "\n\n", 
-#       "WEIGHTED RASTER OUTPUT: NUMGEN FOR ", maxgens, 
-#       " GENERATIONS\n", sep = "")
-# }
-# 
-# # Weight the bricks for NumGen, exporting each generation as a single brick file
-# 
-# RegCluster(ncohort)
-# 
-# NumGen_wtd_byGen <- foreach(gen = as.list(0:maxgens), .packages = pkgs, 
-#                             .inorder = TRUE) %dopar% {
-# #for (gen in as.list(1:maxgens)) {
-#   
-#   # Weight the raster bricks - i.e. calc. the relative size of pop. in each gen
-#   NumGen_wtd <- mapply(function(x, y) { 
-#     calc((brick(x) == gen), fun = function(z) { 
-#       round(100 * z) * y 
-#     })
-#   }, x = NumGen_fls, y = relpopsize)
-#   
-#   # Sum values across all cohorts (raster brick layers)
-#   NumGen_wtd <- Reduce("+", NumGen_wtd)
-#   SaveRaster2(NumGen_wtd, paste("NumGen", gen, sep = "_"), "INT2U", 
-#               paste("- Relative pop. size of gen.", gen, "for all", 
-#                     nlayers(NumGen_wtd), "dates"))
-#   
-#   # If exclusions_stressunits, import the All_Stress_Excl brick to replace 
-#   # weighted NumGen raster values in climatically unsuitable areas with 
-#   # -2 (Excl2) or -1 (Excl1)
-#   if (exclusions_stressunits) {
-#     NumGen_wtd_excl1 <- Rast_Subs_Excl1(NumGen_wtd)  
-#     NumGen_wtd_excl2 <- Rast_Subs_Excl2(NumGen_wtd)
-#     # Make a brick of results and save it
-#     NumGen_wtd_excl1_brk <- do.call(brick, NumGen_wtd_excl1)
-#     SaveRaster2(NumGen_wtd_excl1_brk, 
-#                 paste("NumGenExcl1", gen, sep = "_"), "INT2S",
-#                 str_wrap(paste("- Relative pop. size of gen.", gen,
-#                                "with severe climate stress excl. for all", 
-#                                nlayers(NumGen_wtd), "dates"), width = 80))
-#     NumGen_wtd_excl2_brk <- do.call(brick, NumGen_wtd_excl2)
-#     SaveRaster2(NumGen_wtd_excl2_brk, 
-#                 paste("NumGenExcl2", gen, sep = "_"), "INT2S",
-#                 str_wrap(paste("- Relative pop. size of gen.", gen,
-#                                "with severe and moderate climate stress 
-#                                excl. for all", nlayers(NumGen_wtd), 
-#                                "dates"), width = 80))
-#   }
-# }
-# 
-# stopCluster(cl)
-# 
-# ### * Create summary maps of NumGen results, weighted across cohorts
-# 
-# # Log file messages
-# if (exclusions_stressunits) {
-#   cat("\n\n", str_wrap("Done with weighted raster outputs for 
-#                        NumGen, NumGen_Excl1, and NumGen_Excl2", width = 80),
-#       sep = "", file = Model_rlogging, append = TRUE) 
-#   cat("\n\n### SUMMARY MAP OUTPUT: NUMGEN WITH CLIMATE STRESS EXCLUSIONS ###", 
-#       file = Model_rlogging, append = TRUE)
-#   cat("\n", str_wrap("Done with weighted raster outputs for NumGen, 
-#       NumGen_Excl1, and NumGen_Excl2", width = 80))
-#   cat("\n\nSUMMARY MAP OUTPUT: NUMGEN WITH CLIMATE STRESS EXCLUSIONS\n")
-# } else {
-#   cat("\n\nDone with weighted raster outputs for NumGen", 
-#       file = Model_rlogging, append = TRUE) 
-#   cat("\n\n### SUMMARY MAP OUTPUT: NUMGEN ###", 
-#       file = Model_rlogging, append = TRUE)
-#   cat("\nDone with weighted raster outputs for NumGen\n")
-#   cat("\nSUMMARY MAP OUTPUT: NUMGEN\n", sep = "")
-# }
-# 
-# if (odd_gen_map == 1) {
-#   cat("\n\nPlotting odd generations only", file = Model_rlogging, 
-#       append = TRUE) 
-# }
-# 
-# # Remove NumGen cohort files
-# unlink(list.files(pattern = glob2rx(paste0("*NumGen*cohort*"))))
-# 
-# # Create list of raster brick files for NumGen, NumGenExcl1, and 
-# # NumGenExcl2 (if specified)
-# NumGen_wtd_fls <- list.files(pattern = glob2rx("*NumGen*.tif$"))
-# NumGen_wtd_fls_nams <- NumGen_wtd_fls %>% gsub(".tif", "",.)
-# NumGen_wtd_fls <- as.list(NumGen_wtd_fls)
-# names(NumGen_wtd_fls) <- NumGen_wtd_fls_nams
-# 
-# # Name each layer of each raster brick by it's type 
-# # (NumGen, NumGenExcl1, or NumGenExcl2) and sampling date
-# NumGen_wtd_mrgd_brk <- brick() # blank brick to put named raster into
-# 
-# for (NumGen_wtd_fl in NumGen_wtd_fls) {
-#   NumGen_wtd_brk <- lapply(NumGen_wtd_fl, function(x) { 
-#     brk <- brick(x)
-#     # Replace period w/ underscore in brick name so all text sep. by a "_"
-#     names(brk) <- sub("\\.", "_", names(brk)) 
-#     type <- unique(str_split_fixed(names(brk), pattern = "_", 3)[,1])
-#     gen_no <- unique(str_split_fixed(names(brk), pattern = "_", 3)[,2])
-#     names(brk) <- paste(type, gen_no, dats2, sep = "_")
-#     return(brk)
-#   })
-#   NumGen_wtd_mrgd_brk <- addLayer(NumGen_wtd_mrgd_brk, NumGen_wtd_brk)
-# }
-# 
-# # Split the NumGen layers out by type (NumGen, NumGenExcl1, or NumGenExcl2)
-# NumGen_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
-#                                  grep("NumGen_", names(NumGen_wtd_mrgd_brk)))
-# if (exclusions_stressunits) {
-#   NumGenExcl1_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
-#                           grep("NumGenExcl1_", names(NumGen_wtd_mrgd_brk)))
-#   NumGenExcl2_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
-#                           grep("NumGenExcl2_", names(NumGen_wtd_mrgd_brk)))
-# }
-# 
-# rm(NumGen_wtd_mrgd_brk)
-# 
-# # List of NumGen bricks to plot
-# NumGen_wtd_patrn <- glob2rx("*NumGen*wtd*brk*")
-# NumGen_wtd_plot_list <- mget(ls(pattern = glob2rx("*NumGen*wtd*brk*")))
-# 
-# # For each sampling date, the relative size of the popualtion in each 
-# # generation is calculated; these results are saved as raster bricks and 
-# # visualized in summary maps
-# RegCluster(ncohort)
-# 
-# # Make the plots
-# #for (brk in NumGen_wtd_plot_list) {
-# NumGen_sum_maps <- foreach(brk = NumGen_wtd_plot_list, .packages = pkgs, 
-#                            .inorder = TRUE) %:%
-#   foreach(d = dats_list, .packages = pkgs, .inorder = TRUE) %dopar% {
-#   #for (d in dats_list) {  
-#     nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
-#     #print(nam)
-#     #print(d)
-#     dat_vec <- unname(unlist(d)) # change to an unnamed vector
-#     
-#     # Loop through date vector, creating a raster stack for each date
-#     for (dat in dat_vec) {
-#       stack_sub <- raster::subset(brk, grep(dat, names(brk)))
-#       # Convert each layer of raster stack to a datframe; add generation no.
-#       NumGen_lyrs_toPlot <- list()
-#       j <- 1
-#       for (lyr in 1:nlayers(stack_sub)) {
-#         df <- ConvDF(stack_sub[[lyr]])
-#         df$gen <- str_split_fixed(names(stack_sub[[lyr]]), pattern = "_", 3)[,2]
-#         # Replace "Gen1" with "GenOW" if value is 0
-#         df$gen <- paste0("Gen",df$gen)
-#         # Don't include data if all values are >= 0 - don't want them to be 
-#         # in legend key
-#         if (any(df$value > 0)) {
-#           NumGen_lyrs_toPlot[[j]] <- df
-#         }
-#         j <- j + 1
-#       }
-#       
-#       # Format data if pops of NO gens are present (no value > 0) AND there are 
-#       # climate stress exclusions - i.e. the spp is excluded from entire area. 
-#       # Then take the last data frame in the list; the generation column will 
-#       # be replaced with simply "excl. severe" and/or "excl. moderate" in plot.
-#       # Don't want to show generation in legend (b/c all would be excluded); 
-#       # just show "excl. severe" and/or "excl. moderate"
-#       stack_sub_uniqueVals <- unique(
-#         c(as.matrix(stack_sub)))[!is.na(unique(c(as.matrix(stack_sub))))]
-#       
-#       if (all(stack_sub_uniqueVals < 0)) {
-#         mrgd2 <- df
-#         mrgd2 <- mutate(mrgd2, gen = ifelse(value == -2, "excl.-severe", 
-#                   ifelse(value == -1, "excl.-moderate", value)))
-#       }
-#       
-#       # Merge data frames in the list - if list is empty b/c all data frames 
-#       # had value = 0, then just use most recent data frame
-#       if (any(stack_sub_uniqueVals > -1) & length(NumGen_lyrs_toPlot) > 0) {
-#         mrgd <- do.call(rbind, NumGen_lyrs_toPlot)
-#       } else {
-#         mrgd <- df
-#       }
-#       
-#       # Create a layer for OW generation, using dataframe from latest 
-#       # generation, if present in data
-#       if (any(stack_sub_uniqueVals > -1) & any(mrgd$gen == "Gen0")) {
-#         OW <- data.frame(mrgd %>% dplyr::filter(gen == "Gen0"))
-#       }
-#       
-#       # From merged data frame, remove duplicate cells, showing the most 
-#       # recent generation in cases of overlap
-#       if (any(stack_sub_uniqueVals > -1) & any(mrgd$value > 0)) {
-#         noZero <- data.frame(mrgd %>% group_by(x, y) %>% arrange(gen))
-#         noZero <- dplyr::filter(noZero, !value == 0)
-#         if (any(mrgd$gen == "Gen0")) { 
-#           mrgd2 <- rbind(OW,noZero) 
-#         } else {
-#           mrgd2 <- noZero
-#         }
-#         
-#         # Format data if pops of any gen are present (value > 0) AND there are 
-#         # climate stress exclusions, but first check that there are any values 
-#         # in data >= 0 (if all values < 0, data are handled differently above)
-#         } else if (any(stack_sub_uniqueVals > 0) & any(mrgd$value < 0)) {
-#           if (any(mrgd$value < 0)) {
-#             excl_vals <- data.frame(mrgd %>% dplyr::filter(value != 0))
-#             #excl_vals$gen <- "GenOW"
-#             if (any(df$gen == "Gen0")) {
-#               mrgd2 <- rbind(excl_vals,OW) 
-#             } else {
-#               mrgd2 <- excl_vals
-#             }
-#           } else {
-#             mrgd2 <- OW
-#           }
-#         }
-#       
-#       # Change Gen0 to GenOW for plotting purposes
-#       mrgd2 <- mutate(mrgd2, gen = ifelse(gen == "Gen0", "GenOW", gen))
-#       
-#       # If specified, create summary maps for odd generations only - beginning 
-#       # for 1st gen (i.e., 1, 3, 5, ..)
-#       if (odd_gen_map == 1) { # should odd gens be plotted instead of all gens?
-#         mrgd2$gen_val <- as.numeric(substring(mrgd2$gen, 4))
-#         mrgd2$gen_val[is.na(mrgd2$gen_val)] <- 0
-#         mrgd2 <- mrgd2 %>% filter(gen_val %% 2 != 0) %>%
-#           dplyr::select(-gen_val)
-#       }
-#       
-#       # Plot results as long as there are data in "mrgd2" - this data frame
-#       # will be empty only if "odd_gen_map == 1," and there are no data for 
-#       # Gen1, Gen3, ... etc. (e.g., if there are only data for GenOW, which 
-#       # has been removed)
-#       if (nrow(mrgd2) > 0) {
-#         # Create and save summary maps
-#         if (nam == "NumGenExcl1") {
-#           PlotMap(mrgd2, dat, 
-#                   "Relative pop. size x generation w/ climate stress exclusion",
-#                   "Relative pop.\nsize (peak)", "NumGen_Excl1")
-#         } else if (nam == "NumGenExcl2") {
-#           PlotMap(mrgd2, dat, 
-#                   "Relative pop. size x generation w/ climate stress exclusion",
-#                   "Relative pop.\nsize (peak)", "NumGen_Excl2")
-#         } else if (nam == "NumGen") {
-#           PlotMap(mrgd2, dat, "Relative pop. size x generation", 
-#                   "Relative pop.\nsize (peak)", "NumGen")
-#         }
-#       } else {
-#         cat("\n\nWARNING: NumGen results for", nam, "on", dat, 
-#             "\nnot plotted - no odd generation data for this date", 
-#             file = Model_rlogging, append = TRUE)
-#       }
-#     }
-#   }
-# #}
-# 
-# stopCluster(cl)
+
+#### * NumGen raster processing ####
+NumGen_fls <- list.files(pattern = glob2rx("*NumGen_*.tif$"))
+
+if (exclusions_stressunits) {
+  NumGenExcl1_fls <- list.files(pattern = glob2rx("*NumGenExcl1*.tif$"))
+  NumGenExcl2_fls <- list.files(pattern = glob2rx("*NumGenExcl2*.tif$"))
+}
+
+# Calculate the highest generation to occur across all NumGen bricks, 
+# so can weight data from each
+maxgens <- max(unlist(lapply(NumGen_fls, function(x) { maxValue(brick(x)) })))
+
+# Log file messages
+if (exclusions_stressunits) {
+  cat("\n\n", str_wrap("Done with weighted raster outputs and summary maps for 
+                       Lifestage, Lifestage_Excl1, and Lifestage_Excl2", 
+                       width = 80), "\n\n", 
+      str_wrap(paste("### WEIGHTED RASTER OUTPUT: NUMGEN WITH CLIMATE STRESS 
+                     EXCL. FOR", maxgens, "GENS ###"), width = 80), sep = "", 
+      file = Model_rlogging, append = TRUE) 
+  cat("\n", str_wrap("Done with weighted raster outputs and summary maps for 
+                       Lifestage, Lifestage_Excl1, and Lifestage_Excl2", 
+                       width = 80), "\n", sep = "")
+  cat("\nWEIGHTED RASTER OUTPUT: NUMGEN WITH CLIMATE STRESS EXCL. FOR", 
+       maxgens, " GENS\n", sep = "")
+} else {
+  cat("\n\n", str_wrap("Done with weighted raster outputs and summary maps for 
+                       Lifestage", width = 80), "\n\n", 
+      "### WEIGHTED RASTER OUTPUT: NUMGEN FOR ", maxgens, 
+      " GENERATIONS ###", sep = "", file = Model_rlogging, append = TRUE) 
+  cat("\n", str_wrap("Done with weighted raster outputs and summary maps for 
+                       Lifestage", width = 80), "\n\n", 
+      "WEIGHTED RASTER OUTPUT: NUMGEN FOR ", maxgens, 
+      " GENERATIONS\n", sep = "")
+}
+
+# Weight the bricks for NumGen, exporting each generation as a single brick file
+
+RegCluster(ncohort)
+
+NumGen_wtd_byGen <- foreach(gen = as.list(0:maxgens), .packages = pkgs, 
+                            .inorder = TRUE) %dopar% {
+#for (gen in as.list(1:maxgens)) {
+  
+  # Weight the raster bricks - i.e. calc. the relative size of pop. in each gen
+  NumGen_wtd <- mapply(function(x, y) { 
+    calc((brick(x) == gen), fun = function(z) { 
+      round(100 * z) * y 
+    })
+  }, x = NumGen_fls, y = relpopsize)
+  
+  # Sum values across all cohorts (raster brick layers)
+  NumGen_wtd <- Reduce("+", NumGen_wtd)
+  SaveRaster2(NumGen_wtd, paste("NumGen", gen, sep = "_"), "INT2U", 
+              paste("- Gen.", gen, "for all", nlayers(NumGen_wtd), "dates"))
+  
+  # If exclusions_stressunits, import the All_Stress_Excl brick to replace 
+  # weighted NumGen raster values in climatically unsuitable areas with 
+  # -2 (Excl2) or -1 (Excl1)
+  if (exclusions_stressunits) {
+    NumGen_wtd_excl1 <- Rast_Subs_Excl1(NumGen_wtd)  
+    NumGen_wtd_excl2 <- Rast_Subs_Excl2(NumGen_wtd)
+    # Make a brick of results and save it
+    NumGen_wtd_excl1_brk <- do.call(brick, NumGen_wtd_excl1)
+    SaveRaster2(NumGen_wtd_excl1_brk, 
+                paste("NumGenExcl1", gen, sep = "_"), "INT2S",
+                str_wrap(paste("- Gen.", gen,
+                "with severe climate stress excl. for all", 
+                               nlayers(NumGen_wtd), "dates"), width = 80))
+    NumGen_wtd_excl2_brk <- do.call(brick, NumGen_wtd_excl2)
+    SaveRaster2(NumGen_wtd_excl2_brk, 
+                paste("NumGenExcl2", gen, sep = "_"), "INT2S",
+                str_wrap(paste("- Gen.", gen,
+                               "with severe and moderate climate stress 
+                               excl. for all", nlayers(NumGen_wtd), 
+                               "dates"), width = 80))
+  }
+}
+
+stopCluster(cl)
+
+### * Create summary maps of NumGen results, weighted across cohorts
+
+# Log file messages
+if (exclusions_stressunits) {
+  cat("\n\n", str_wrap("Done with weighted raster outputs for 
+                       NumGen, NumGen_Excl1, and NumGen_Excl2", width = 80),
+      sep = "", file = Model_rlogging, append = TRUE) 
+  cat("\n\n### SUMMARY MAP OUTPUT: NUMGEN WITH CLIMATE STRESS EXCLUSIONS ###", 
+      file = Model_rlogging, append = TRUE)
+  cat("\n", str_wrap("Done with weighted raster outputs for NumGen, 
+      NumGen_Excl1, and NumGen_Excl2", width = 80))
+  cat("\n\nSUMMARY MAP OUTPUT: NUMGEN WITH CLIMATE STRESS EXCLUSIONS\n")
+} else {
+  cat("\n\nDone with weighted raster outputs for NumGen", 
+      file = Model_rlogging, append = TRUE) 
+  cat("\n\n### SUMMARY MAP OUTPUT: NUMGEN ###", 
+      file = Model_rlogging, append = TRUE)
+  cat("\nDone with weighted raster outputs for NumGen\n")
+  cat("\nSUMMARY MAP OUTPUT: NUMGEN\n", sep = "")
+}
+
+if (odd_gen_map == 1) {
+  cat("\n\nPlotting odd generations only", file = Model_rlogging, 
+      append = TRUE) 
+}
+
+# Remove NumGen cohort files
+unlink(list.files(pattern = glob2rx(paste0("*NumGen*cohort*"))))
+
+# Create list of raster brick files for NumGen, NumGenExcl1, and 
+# NumGenExcl2 (if specified)
+NumGen_wtd_fls <- list.files(pattern = glob2rx("*NumGen*.tif$"))
+NumGen_wtd_fls_nams <- NumGen_wtd_fls %>% gsub(".tif", "",.)
+NumGen_wtd_fls <- as.list(NumGen_wtd_fls)
+names(NumGen_wtd_fls) <- NumGen_wtd_fls_nams
+
+# Name each layer of each raster brick by it's type 
+# (NumGen, NumGenExcl1, or NumGenExcl2) and sampling date
+NumGen_wtd_mrgd_brk <- brick() # blank brick to put named raster into
+
+for (NumGen_wtd_fl in NumGen_wtd_fls) {
+  NumGen_wtd_brk <- lapply(NumGen_wtd_fl, function(x) { 
+    brk <- brick(x)
+    # Replace period w/ underscore in brick name so all text sep. by a "_"
+    names(brk) <- sub("\\.", "_", names(brk)) 
+    type <- unique(str_split_fixed(names(brk), pattern = "_", 3)[,1])
+    gen_no <- unique(str_split_fixed(names(brk), pattern = "_", 3)[,2])
+    names(brk) <- paste(type, gen_no, dats2, sep = "_")
+    return(brk)
+  })
+  NumGen_wtd_mrgd_brk <- addLayer(NumGen_wtd_mrgd_brk, NumGen_wtd_brk)
+}
+
+# Split the NumGen layers out by type (NumGen, NumGenExcl1, or NumGenExcl2)
+NumGen_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
+                                 grep("NumGen_", names(NumGen_wtd_mrgd_brk)))
+if (exclusions_stressunits) {
+  NumGenExcl1_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
+                          grep("NumGenExcl1_", names(NumGen_wtd_mrgd_brk)))
+  NumGenExcl2_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
+                          grep("NumGenExcl2_", names(NumGen_wtd_mrgd_brk)))
+}
+
+rm(NumGen_wtd_mrgd_brk)
+
+# List of NumGen bricks to plot
+NumGen_wtd_patrn <- glob2rx("*NumGen*wtd*brk*")
+NumGen_wtd_plot_list <- mget(ls(pattern = glob2rx("*NumGen*wtd*brk*")))
+
+# For each sampling date, the relative size of the popualtion in each 
+# generation is calculated; these results are saved as raster bricks and 
+# visualized in summary maps
+RegCluster(ncohort)
+
+# Make the plots
+#for (brk in NumGen_wtd_plot_list) {
+  NumGen_sum_maps <- foreach(brk = NumGen_wtd_plot_list, .packages = pkgs, 
+                             .inorder = TRUE) %:%
+    foreach(d = dats_list, .packages = pkgs, .inorder = TRUE) %dopar% {
+ # for (d in dats_list) {  
+    nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
+    print(nam)
+    print(d)
+    dat_vec <- unname(unlist(d)) # change to an unnamed vector
+    
+    # Loop through date vector, creating a raster stack for each date
+    for (dat in dat_vec) {
+      stack_sub <- raster::subset(brk, grep(dat, names(brk)))
+      # Convert each layer of raster stack to a datframe; add generation no.
+      NumGen_lyrs_toPlot <- list()
+      j <- 1
+      for (lyr in 1:nlayers(stack_sub)) {
+        df <- ConvDF(stack_sub[[lyr]])
+        df$gen_num <- as.numeric(str_split_fixed(names(stack_sub[[lyr]]), 
+                                      pattern = "_", 3)[,2])
+        
+        # Replace "Gen1" with "GenOW" if value is 0
+        df$gen <- paste(as.character(df$gen_num),"gens.")
+        # Don't include data if all values are >= 0 - don't want them to be 
+        # in legend key
+        if (any(df$value > 0)) {
+          NumGen_lyrs_toPlot[[j]] <- df
+        }
+        j <- j + 1
+      }
+      
+      # Format data if pops of NO gens are present (no value > 0) AND there are 
+      # climate stress exclusions - i.e. the spp is excluded from entire area. 
+      # Then take the last data frame in the list; the generation column will 
+      # be replaced with simply "excl. severe" and/or "excl. moderate" in plot.
+      # Don't want to show generation in legend (b/c all would be excluded); 
+      # just show "excl. severe" and/or "excl. moderate"
+      stack_sub_uniqueVals <- unique(
+        c(as.matrix(stack_sub)))[!is.na(unique(c(as.matrix(stack_sub))))]
+      
+      if (all(stack_sub_uniqueVals < 0)) {
+        mrgd2 <- df
+        mrgd2 <- mutate(mrgd2, gen = ifelse(value == -2, "excl.-severe", 
+                  ifelse(value == -1, "excl.-moderate", value)))
+      }
+      
+      # Merge data frames in the list - if list is empty b/c all data frames 
+      # had value = 0, then just use most recent data frame
+      if (any(stack_sub_uniqueVals > -1) & length(NumGen_lyrs_toPlot) > 0) {
+        mrgd <- do.call(rbind, NumGen_lyrs_toPlot)
+      } else {
+        mrgd <- df
+      }
+      
+      # Create a layer for OW generation, using dataframe from latest 
+      # generation, if present in data
+      if (any(stack_sub_uniqueVals > -1) & any(mrgd$gen == "0 gens.")) {
+        OW <- data.frame(mrgd %>% dplyr::filter(gen == "0 gens."))
+      }
+      
+      # From merged data frame, remove duplicate cells, showing the most 
+      # recent generation in cases of overlap
+      if (any(stack_sub_uniqueVals > -1) & any(mrgd$value > 0)) {
+        noZero <- data.frame(mrgd %>% group_by(x, y) %>% arrange(gen))
+        noZero <- dplyr::filter(noZero, !value == 0)
+        if (any(mrgd$gen == "0 gens.")) { 
+          mrgd2 <- rbind(OW,noZero) 
+        } else {
+          mrgd2 <- noZero
+        }
+        
+        # Format data if pops of any gen are present (value > 0) AND there are 
+        # climate stress exclusions, but first check that there are any values 
+        # in data >= 0 (if all values < 0, data are handled differently above)
+        } else if (any(stack_sub_uniqueVals > 0) & any(mrgd$value < 0)) {
+          if (any(mrgd$value < 0)) {
+            excl_vals <- data.frame(mrgd %>% dplyr::filter(value != 0))
+            #excl_vals$gen <- "GenOW"
+            if (any(df$gen == "0 gens.")) {
+              mrgd2 <- rbind(excl_vals,OW) 
+            } else {
+              mrgd2 <- excl_vals
+            }
+          } else {
+            mrgd2 <- OW
+          }
+        }
+      
+      # Change Gen0 to GenOW for plotting purposes
+      # mrgd2 <- mutate(mrgd2, gen = ifelse(gen == "Gen0", "GenOW", gen))
+      
+      # If specified, create summary maps for odd generations only - beginning 
+      # for 1st gen (i.e., 1, 3, 5, ..)
+      if (odd_gen_map == 1) { # Should odd gens be plotted instead of all gens?
+        # Extract gen. number
+        mrgd2$gen_val <- as.numeric(gsub("([0-9]+).*$", "\\1", mrgd2$gen))
+        mrgd2$gen_val[is.na(mrgd2$gen_val)] <- 0
+        mrgd2 <- mrgd2 %>% filter(gen_val %% 2 != 0) %>%
+          dplyr::select(-gen_val)
+      }
+      
+      # Plot results as long as there are data in "mrgd2" - this data frame
+      # will be empty only if "odd_gen_map == 1," and there are no data for 
+      # Gen1, Gen3, ... etc. (e.g., if there are only data for GenOW, which 
+      # has been removed)
+      if (nrow(mrgd2) > 0) {
+        # Create and save summary maps
+        if (nam == "NumGenExcl1") {
+          PlotMap(mrgd2, dat, 
+                  "Number of generations w/ climate stress exclusions",
+                  "No. of\ngenerations", "NumGen_Excl1")
+        } else if (nam == "NumGenExcl2") {
+          PlotMap(mrgd2, dat, 
+                  "Number of generations w/ climate stress exclusions",
+                  "No. of\ngenerations", "NumGen_Excl2")
+        } else if (nam == "NumGen") {
+          PlotMap(mrgd2, dat, "Number of generations", 
+                  "No. of\ngenerations", "NumGen")
+        }
+      } else {
+        cat("\n\nWARNING: NumGen results for", nam, "on", dat, 
+            "\nnot plotted - no odd generation data for this date", 
+            file = Model_rlogging, append = TRUE)
+      }
+    }
+  }
+#}
+
+stopCluster(cl)
 
 # Log file messages
 if (exclusions_stressunits) {
   cat("\n\n", str_wrap("Done with summary maps for NumGen, NumGen_Excl1, and 
                        NumGen_Excl2", width = 80), sep = "", 
       file = Model_rlogging, append = TRUE) 
-  cat("\n\n", str_wrap("### ANALYSIS: LIFESTAGE BY GENERATION WITH CLIMATE 
+  cat("\n\n", str_wrap("### ANALYSIS: LIFESTAGE W/ NO. OF GENS. AND CLIMATE 
                        STRESS EXCLUSIONS ###\n", 
                        width = 80), sep = "", 
       file = Model_rlogging, append = TRUE)
   cat("\nDone with summary maps for NumGen, NumGen_Excl1, and NumGen_Excl2\n\n", 
-      str_wrap("ANALYSIS: LIFESTAGE BY GENERATION WITH CLIMATE STRESS 
+      str_wrap("ANALYSIS: LIFESTAGE W/ NO. OF GENS. AND CLIMATE STRESS 
                EXCLUSIONS\n\n", width = 80), sep = "")
 } else {
   cat("\n\nDone with summary maps for NumGen", 
       file = Model_rlogging, append = TRUE) 
-  cat("\n\n### ANALYSIS: LIFESTAGE BY GENERATION ###\n", sep = "", 
+  cat("\n\n### ANALYSIS: LIFESTAGE WITH NUMBER OF GENS. ###\n", sep = "", 
       file = Model_rlogging, append = TRUE)
   cat("\nDone with summary maps for NumGen\n\n", str_wrap("ANALYSIS: LIFESTAGE 
-      BY GENERATION\n\n"), sep = "")
+      WITH NUMBER OF GENS.\n\n"), sep = "")
 }
 
 
@@ -1803,320 +1813,320 @@ if(do_photo){
     } 
   }
   stopCluster(cl)
-  
 } # close do_photo
 
 
+#### * Lifestage by generation analysis ####
 
-# 
-# 
-# #### * Lifestage by generation analysis ####
-# 
-# # NumGen layers may overlap at edges due to cohorts
-# # Want to show later generations in case of overlap, or maps will show adults 
-# # that are assigned to the wrong generation. First make a vector of the various 
-# # generation combinations to deal w/ this overlap issue.
-# # TO DO: find a more efficient way to overaly generation combos w/o several 
-# # lines of code here
-# gens <- as.numeric(unique(substr(names(NumGen_wtd_brk), start = 8, stop = 8)))
-# gens_noOW <- gens[gens != 0] # remove OW generation
-# 
-# # If more than 2 generations, split even and odd gens, make combos, and then 
-# # paste together
-# if (length(gens_noOW) > 2) {
-#   # Take every other gen no., starting with element 1 (odd), and again with 
-#   # element 2 (even)
-#   gens_even <- gens_noOW[gens_noOW %% 2 == 0] # if divisible by 2, is even 
-#   gens_even <- paste("NumGen", gens_even, sep = "_")
-#   gens_odd <- gens_noOW[gens_noOW %% 2 != 0] # if not divisible by 2, is odd
-#   gens_odd <- paste("NumGen", gens_odd, sep = "_")
-#   gens_odd2 <- gens_odd[2:length(gens_odd)]
-#   # First combo - consecutive numbers starting at Gen1 
-#   # (e.g. NumGen_2|NumGen_1, NumGen_4|NumGen_3...)
-#   # If uneven no. of gens, need to trim odd and even to same length
-#   if (length(gens_odd) > length(gens_even)) {
-#     gens_combo1 <- paste(gens_even, gens_odd[1:length(gens_even)], sep = "|")
-#   } else {
-#     gens_combo1 <- paste(gens_even, gens_odd, sep = "|")
-#   }
-#   # Second combo - consecutive numbers starting at Gen2 
-#   # (e.g., NumGen_3|NumGen_2, NumGen_5|NumGen_4)
-#   gens_combo2 <- paste(gens_odd2, gens_even[1:length(gens_odd2)], sep = "|")
-#   # Combine the two combo vectors and sort, then add on OW gen
-#   gens_combo_all <- sort(c(gens_combo1, gens_combo2)) 
-#   gens_combo_all <- append("NumGen_1|NumGen_0", gens_combo_all)
-#   # If only two generations, then just make this combo
-#   } else if (length(gens_noOW) == 2) {
-#     gens_combo_all <- c("NumGen_1|NumGen_0", "NumGen_2|NumGen_1")
-#   # If only one generation, then make this combo
-#   } else if (length(gens_noOW) == 1) {
-#     gens_combo_all <- c("NumGen_1|NumGen_0")
-# }
-# 
-# # For each combination, overlay the combos for each date and replace older 
-# # generation values (e.g., for combo "NumGen_2|NumGen_1" - NumGen_2 will replace 
-# # NumGen1 where there is overlap)
-# cat("\n", str_wrap("Replacing older generation vals with newer gen. 
-#                    vals in areas of overlap", width = 80), "\n", sep = "",
-#     file = Model_rlogging, append = TRUE)
-# 
-# corrected_brick_list <- list()
-# 
-# if (length(gens) > 1) {
-#   RegCluster(4)
-#   corrected_NumGen <- foreach(d = 1:length(dats2), .packages = pkgs, 
-#                               .inorder = FALSE) %dopar% {
-#     #for (d in 1:length(dats2)) { 
-#     for (i in 1:length(gens_combo_all)) {
-#       sub1 <- raster::subset(NumGen_wtd_brk, grep(dats2[d], 
-#                             names(NumGen_wtd_brk))) # subet raster stack by date
-#       # Replace all non-zero values w/ 1, and 0 values with NA
-#       sub1[sub1 > 0] <- 1 
-#       sub1[sub1 == 0] <- NA
-#       # Get each gen in the combo
-#       genA <- str_split_fixed(gens_combo_all[i], pattern = "\\|", 2)[,1]
-#       genB <- str_split_fixed(gens_combo_all[i], pattern = "\\|", 2)[,2]
-#       # Search for each of those gens in the stack and combine them
-#       # The order matters here, genA must be first layer
-#       sub1A <- raster::subset(sub1, grep(paste0(genA, "_"), names(sub1)))
-#       sub1B <- raster::subset(sub1, grep(paste0(genB, "_"), names(sub1)))
-#       sub2 <- stack(sub1A,sub1B)
-#       # Identify areas where the two gens overlap by summing them
-#       # Areas of overlap = 2
-#       gen_ovlp <- stackApply(sub2, indices = c(1),fun = sum) 
-#       # Crop the layer of the later generation if it overlaps w/ earlier one 
-#       # (but if values are all NA, just keep it)
-#       if (!is.na(any(values(sub2[[2]] > 0)))) {
-#         gen_ovlp_NA <- overlay(sub2[[1]], sub2[[2]], gen_ovlp, 
-#           fun = function(x, y,z) {
-#             x[z == 2] <- NA
-#             return(x) # Returns cropped layer of later generation
-#           })
-#         names(gen_ovlp_NA) <- names(sub2[[1]])
-#       } else {
-#          gen_ovlp_NA <- sub2[[1]]
-#       }
-#       # Need to add the very first layer back in (should be Gen0)
-#       if (i == length(gens_combo_all)) {
-#         gen0 <- sub1[[1]]
-#         gen_ovlp_NA <- stack(gen0, gen_ovlp_NA)
-#       }
-#       # "Corrected" combo is put back into a list
-#       corrected_brick_list[i] <- gen_ovlp_NA 
-#       }
-#       corrected_brick <- do.call(stack, corrected_brick_list) 
-#       }
-#     stopCluster(cl)
-# }
-#       
-# # Combine all rasters in the list and order them by order them by generation 
-# # and date
-# if (length(gens) > 1) {
-#   NumGen_wtd_stk2 <- do.call(stack, corrected_NumGen)
-# } else {
-#   NumGen_wtd_stk2 <- NumGen_wtd_stk
-# }
-#       
-# ord <- c(sort(names(NumGen_wtd_stk2))) # List of ordered layer names
-# mtch <- as.integer()
-# for (j in 1:length(ord)) {
-#   # Match layer number to ordered names so can rerrange stack
-#   mtch[j] <- match(ord[j], names(NumGen_wtd_stk2)) 
-#   mtch <- unname(mtch)
-# }
-#       
-# # Rearrange the stack
-# NumGen_wtd_stk3 <- stack()
-# for (m in mtch) {
-#     NumGen_wtd_stk3 <- addLayer(NumGen_wtd_stk3, NumGen_wtd_stk2[[m]])
-# }
-# 
-# # Now use resulting NumGen stack layers to mask out Lifestage (adult) layers
-# if (exclusions_stressunits) {
-#   cat("\n", str_wrap("Assigning a generation number to pixels in the Adult, 
-#                    Adult_Excl1, and Adult_Excl2 raster bricks", width = 80), 
-#       sep = "", file = Model_rlogging, append = TRUE)
-# } else {
-#   cat("\n", str_wrap("Assigning a generation number to pixels in the Adult 
-#                      raster brick", width = 80), sep = "", 
-#       file = Model_rlogging, append = TRUE)
-# }
-# 
-# # Get the weighted adult ("Adult") raster brick. Note that if the species 
-# # overwinters as that brick will have "Adult" raster brick will be the rel.
-# # pop. size of both "OWadult" and "Adult"
-# Adults_wtd <- brick("Misc_output/Adult.tif")
-# if (exclusions_stressunits) {
-#   AdultsExcl1_wtd <- brick("Misc_output/Adult_Excl1.tif")
-#   AdultsExcl2_wtd <- brick("Misc_output/Adult_Excl2.tif")
-# }
-# 
-# # Subet NumGen raster stack by generation; recode vals <34(?), and mask out 
-# # adult weighted raster w/ by gen
-# Adults_wtd_sublist <- list()
-# AdultsExcl1_wtd_sublist <- list()
-# AdultsExcl2_wtd_sublist <- list()
-# 
-# if (odd_gen_map == 1) {
-#   gens2 <- gens[seq(1, length(gens), 2)]
-# }
-# 
-# j <- 1
-# #foreach(gen = gens, .packages = pkgs, .inorder = FALSE) %dopar% {
-# for (gen in gens) {
-#   #print(j)
-#   NumGen_wtd_sub <- raster::subset(NumGen_wtd_stk3, 
-#                       grep(paste0("NumGen_", gen), names(NumGen_wtd_stk3)))
-#   NumGen_msk <- NumGen_wtd_sub
-#   # For Adults (no clim. stress exclusions)
-#   # Mask out areas in adults raster that do not belong to the gen. of interest
-#   Adults_wtd_sub <- overlay(Adults_wtd, NumGen_msk, fun = function(x, y) {
-#     x[is.na(y[])] <- NA
-#     return(x)
-#   })
-#   names(Adults_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
-#   Adults_wtd_sublist[[j]] <- Adults_wtd_sub
-#   # Do the same for AdultsExcl1 and AdultsExcl2 if relevant
-#   if (exclusions_stressunits) {
-#     #AdultsExcl1
-#     AdultsExcl1_wtd_sub <- overlay(AdultsExcl1_wtd, NumGen_msk, 
-#       fun = function(x, y) {
-#         x[is.na(y[])] <- NA
-#         return(x)
-#       })
-#     names(AdultsExcl1_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
-#     AdultsExcl1_wtd_sublist[[j]] <- AdultsExcl1_wtd_sub
-#     #AdultsExcl2
-#     AdultsExcl2_wtd_sub <- overlay(AdultsExcl2_wtd, NumGen_msk, 
-#       fun = function(x, y) {
-#         x[is.na(y[])] <- NA
-#         return(x)
-#     })
-#     names(AdultsExcl2_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
-#     AdultsExcl2_wtd_sublist[[j]] <- AdultsExcl2_wtd_sub
-#   }
-#   j <- j + 1
-# }
-# 
-# # Make one big stack from list of results
-# NumGen_Adults_wtd <- do.call(stack, Adults_wtd_sublist)
-# if (exclusions_stressunits) {
-#   NumGen_AdultsExcl1_wtd <- do.call(stack, AdultsExcl1_wtd_sublist)
-#   NumGen_AdultsExcl2_wtd <- do.call(stack, AdultsExcl2_wtd_sublist)
-# }
-# 
-# # Subset raster stack by date, extract generation data from layer name, 
-# # convert to a data frame, and put it in a list
-# if (exclusions_stressunits) {
-#   AdultStg_byGen_list <- list(NumGen_Adults_wtd, NumGen_AdultsExcl1_wtd, 
-#                               NumGen_AdultsExcl2_wtd)
-#   names(AdultStg_byGen_list) <- c("Adults_brk", "AdultsExcl1_brk", 
-#                                   "AdultsExcl2_brk")
-# } else {
-#   AdultStg_byGen_list <- list(NumGen_Adults_wtd)
-#   names(AdultStg_byGen_list) <- c("Adults_brk")
-# }
-# 
-# #### * Life stage by generation plots ####
-# if (exclusions_stressunits) {
-#   cat("\n\nDone with Lifestage by Gen analysis\n\n", 
-#       str_wrap("### SUMMARY MAP OUTPUT: LIFESTAGE BY GENERATION WITH CLIMATE 
-#                STRESS EXCL.", width = 80), " ###", sep = "",
-#       file = Model_rlogging, append = TRUE)
-#   cat("\n\nDone with Lifestage by Gen analysis\n\n", 
-#       str_wrap("SUMMARY MAP OUTPUT: LIFESTAGE BY GENERATION WITH 
-#                      CLIMATE STRESS EXCL.\n", width = 80), "\n", sep = "")
-# } else {
-#   cat("\n\n### SUMMARY MAP OUTPUT: LIFESTAGE BY GENERATION ###", sep = "",
-#       file = Model_rlogging, append = TRUE)
-#   cat("\n\nDone with Lifestage by Gen analysis\n\n", 
-#       str_wrap("SUMMARY MAP OUTPUT: LIFESTAGE BY GENERATION\n", width = 80), 
-#       "\n", sep = "")
-# }
-# 
-# if (odd_gen_map == 1) {
-#   cat("\n\nPlotting odd generations only", file = Model_rlogging, 
-#       append = TRUE) 
-# }
-# 
-# # Generate and save summary plots for "Lifestage by Generation" (currenlty only
-# # doing these for adults)
-# RegCluster(4)
-# AdultStg_byGen_sum_maps <- foreach(j = 1:length(AdultStg_byGen_list), 
-#    .packages = pkgs, .inorder = TRUE) %dopar% {
-# #for (j in 1:length(AdultStg_byGen_list)) {
-#   nam <- paste0(names(AdultStg_byGen_list[j]))
-#   #print(nam)
-#   for (d in dats2) {
-#     #print(d)
-#     df_list <- list()
-#     stk_sub <- raster::subset(AdultStg_byGen_list[[j]], 
-#               grep(d, names(AdultStg_byGen_list[[j]]))) # subet by date
-# 
-#     # For each stack layer, identify the generation, convert data to a 
-#     # data frame and add it to a list
-#     for (i in 1:nlayers(stk_sub)) {
-#       r <- stk_sub[[i]]
-#       gen <- substr(names(r), start = 8, stop = 8)
-#       # Only convert to data frame if any values are not NA 
-#       # and either greater than 0, or less than 0 (which indicates climate 
-#       # stress exclusions)
-#       if (any(values(r) >= 0 & !is.na(values(r))) | 
-#           any(values(r) < 0 & !is.na(values(r)))) {
-#         lyr_df <- ConvDF(r) # convert raster to a data frame
-#         lyr_df$gen <- gen
-#         colnames(lyr_df)[1] <- "value"
-#         df_list[[i]] <- lyr_df # add to the list 
-#       }
-#     }
-#     
-#     # Merge the list into a single data frame - this has data from all 
-#     # generations for a given date. Remove generations for which all values 
-#     # are 0, otherwise will obscure data from other layers (other gens)
-#     # Not doing this will produce erroneous bands of adults at southern edge
-#     mrgd <- do.call(rbind, df_list) 
-# 
-#     # Optional: create summary maps for odd generations only - beginning for 
-#     # 1st gen (i.e., 1, 3, 5, ..)
-#     if (odd_gen_map == 1) { # should odd gens be plotted instead of all gens?
-#       mrgd <- mrgd %>% filter(as.numeric(gen) %% 2 != 0)
-#     }
-#     
-#     # Plot results as long as there are data in "mrgd2" - this data frame will 
-#     # be empty only if "odd_gen_map == 1" and there are no data for Gen1, Gen3, 
-#     # ... etc. (e.g., if there are only data for GenOW, which has been removed)
-#     # Currently "other stages" (not adults) are colored gray - may want to 
-#     # consider coloring them more similarly to which generation they belong to
-#     if (nrow(mrgd) > 0) {
-#       if (nam == "Adults_brk") {
-#         PlotMap(mrgd, d, "Adult relative pop. size x gen.", 
-#                 "Adult relative\npop. size (peak)", "Misc_output/Adult_byGen")
-#         } else if (nam == "AdultsExcl1_brk") {
-#           PlotMap(mrgd, d, 
-#                   "Adult relative pop. size x gen. w/ climate stress exclusion",
-#                   "Adult relative\npop. size (peak)", 
-#                   "Misc_output/Adult_Excl1_byGen")
-#         } else if (nam == "AdultsExcl2_brk") {
-#           PlotMap(mrgd, d, 
-#                   "Adult relative pop. size x gen. w/ climate stress exclusion",
-#                   "Adult relative\npop. size (peak)", 
-#                   "Misc_output/Adult_Excl2_byGen")
-#       }
-#     } else {
-#       cat("\n\nWARNING: Adult by Generation results for", nam, "on", d, 
-#           "\nnot plotted - no odd generation data for this date", 
-#           file = Model_rlogging, append = TRUE)
-#     }
-#   }
-# }
-# 
-# stopCluster(cl)
+# NumGen layers may overlap at edges due to cohorts
+# Want to show later generations in case of overlap, or maps will show adults 
+# that are assigned to the wrong generation. First make a vector of the various 
+# generation combinations to deal w/ this overlap issue.
+# TO DO: find a more efficient way to overaly generation combos w/o several 
+# lines of code here
+gens <- as.numeric(unique(substr(names(NumGen_wtd_brk), start = 8, stop = 8)))
+gens_noOW <- gens[gens != 0] # remove OW generation
+
+# If more than 2 generations, split even and odd gens, make combos, and then 
+# paste together
+if (length(gens_noOW) > 2) {
+  # Take every other gen no., starting with element 1 (odd), and again with 
+  # element 2 (even)
+  gens_even <- gens_noOW[gens_noOW %% 2 == 0] # if divisible by 2, is even 
+  gens_even <- paste("NumGen", gens_even, sep = "_")
+  gens_odd <- gens_noOW[gens_noOW %% 2 != 0] # if not divisible by 2, is odd
+  gens_odd <- paste("NumGen", gens_odd, sep = "_")
+  gens_odd2 <- gens_odd[2:length(gens_odd)]
+  # First combo - consecutive numbers starting at NumGen1 
+  # (e.g. NumGen_2|NumGen_1, NumGen_4|NumGen_3...)
+  # If uneven no. of gens, need to trim odd and even to same length
+  if (length(gens_odd) > length(gens_even)) {
+    gens_combo1 <- paste(gens_even, gens_odd[1:length(gens_even)], sep = "|")
+  } else {
+    gens_combo1 <- paste(gens_even, gens_odd, sep = "|")
+  }
+  # Second combo - consecutive numbers starting at NumGen2 
+  # (e.g., NumGen_3|NumGen_2, NumGen_5|NumGen_4)
+  gens_combo2 <- paste(gens_odd2, gens_even[1:length(gens_odd2)], sep = "|")
+  # Combine the two combo vectors and sort, then add on OW gen
+  gens_combo_all <- sort(c(gens_combo1, gens_combo2)) 
+  gens_combo_all <- append("NumGen_1|NumGen_0", gens_combo_all)
+  # If only two generations, then just make this combo
+} else if (length(gens_noOW) == 2) {
+  gens_combo_all <- c("NumGen_1|NumGen_0", "NumGen_2|NumGen_1")
+  # If only one generation, then make this combo
+} else if (length(gens_noOW) == 1) {
+  gens_combo_all <- c("NumGen_1|NumGen_0")
+}
+
+# For each combination, overlay the combos for each date and replace older 
+# generation values (e.g., for combo "NumGen_2|NumGen_1" - NumGen_2 will replace 
+# NumGen1 where there is overlap)
+cat("\n", str_wrap("Replacing older generation vals with newer gen. 
+                   vals in areas of overlap", width = 80), "\n", sep = "",
+    file = Model_rlogging, append = TRUE)
+
+corrected_brick_list <- list()
+
+if (length(gens) > 1) {
+  RegCluster(4)
+  corrected_NumGen <- foreach(d = 1:length(dats2), .packages = pkgs, 
+                              .inorder = FALSE) %dopar% {
+                                #for (d in 1:length(dats2)) { 
+                                for (i in 1:length(gens_combo_all)) {
+                                  sub1 <- raster::subset(NumGen_wtd_brk, grep(dats2[d], 
+                                                                              names(NumGen_wtd_brk))) # subet raster stack by date
+                                  # Replace all non-zero values w/ 1, and 0 values with NA
+                                  sub1[sub1 > 0] <- 1 
+                                  sub1[sub1 == 0] <- NA
+                                  # Get each gen in the combo
+                                  genA <- str_split_fixed(gens_combo_all[i], pattern = "\\|", 2)[,1]
+                                  genB <- str_split_fixed(gens_combo_all[i], pattern = "\\|", 2)[,2]
+                                  # Search for each of those gens in the stack and combine them
+                                  # The order matters here, genA must be first layer
+                                  sub1A <- raster::subset(sub1, grep(paste0(genA, "_"), names(sub1)))
+                                  sub1B <- raster::subset(sub1, grep(paste0(genB, "_"), names(sub1)))
+                                  sub2 <- stack(sub1A, sub1B)
+                                  # Identify areas where the two gens overlap by summing them
+                                  # Areas of overlap = 2
+                                  gen_ovlp <- stackApply(sub2, indices = c(1), fun = sum) 
+                                  # Crop the layer of the later generation if it overlaps w/ earlier one 
+                                  # (but if values are all NA, just keep it)
+                                  if (!is.na(any(values(sub2[[2]] > 0)))) {
+                                    gen_ovlp_NA <- overlay(sub2[[1]], sub2[[2]], gen_ovlp, 
+                                                           fun = function(x, y,z) {
+                                                             x[z == 2] <- NA
+                                                             return(x) # Returns cropped layer of later generation
+                                                           })
+                                    names(gen_ovlp_NA) <- names(sub2[[1]])
+                                  } else {
+                                    gen_ovlp_NA <- sub2[[1]]
+                                  }
+                                  # Need to add the very first layer back in (should be NumGen0)
+                                  if (i == length(gens_combo_all)) {
+                                    gen0 <- sub1[[1]]
+                                    gen_ovlp_NA <- stack(gen0, gen_ovlp_NA)
+                                  }
+                                  # "Corrected" combo is put back into a list
+                                  corrected_brick_list[i] <- gen_ovlp_NA 
+                                }
+                                corrected_brick <- do.call(stack, corrected_brick_list) 
+                              }
+  stopCluster(cl)
+}
+
+# Combine all rasters in the list and order them by order them by generation 
+# and date
+if (length(gens) > 1) {
+  NumGen_wtd_stk2 <- do.call(stack, corrected_NumGen)
+} else {
+  NumGen_wtd_stk2 <- NumGen_wtd_stk
+}
+
+ord <- c(sort(names(NumGen_wtd_stk2))) # List of ordered layer names
+mtch <- as.integer()
+for (j in 1:length(ord)) {
+  # Match layer number to ordered names so can rerrange stack
+  mtch[j] <- match(ord[j], names(NumGen_wtd_stk2)) 
+  mtch <- unname(mtch)
+}
+
+# Rearrange the stack
+NumGen_wtd_stk3 <- stack()
+for (m in mtch) {
+  NumGen_wtd_stk3 <- addLayer(NumGen_wtd_stk3, NumGen_wtd_stk2[[m]])
+}
+
+# Now use resulting NumGen stack layers to mask out Lifestage (adult) layers
+if (exclusions_stressunits) {
+  cat("\n", str_wrap("Assigning a generation number to pixels in the Adult, 
+                     Adult_Excl1, and Adult_Excl2 raster bricks", width = 80), 
+      sep = "", file = Model_rlogging, append = TRUE)
+} else {
+  cat("\n", str_wrap("Assigning a generation number to pixels in the Adult 
+                     raster brick", width = 80), sep = "", 
+      file = Model_rlogging, append = TRUE)
+}
+
+# Get the weighted adult ("Adult") raster brick. Note that if the species 
+# overwinters as that brick will have "Adult" raster brick will be the rel.
+# pop. size of both "OWadult" and "Adult"
+Adults_wtd <- brick("Misc_output/Adult.tif")
+if (exclusions_stressunits) {
+  AdultsExcl1_wtd <- brick("Misc_output/Adult_Excl1.tif")
+  AdultsExcl2_wtd <- brick("Misc_output/Adult_Excl2.tif")
+}
+
+# Subet NumGen raster stack by generation; recode vals <34(?), and mask out 
+# adult weighted raster w/ by gen
+Adults_wtd_sublist <- list()
+AdultsExcl1_wtd_sublist <- list()
+AdultsExcl2_wtd_sublist <- list()
+
+if (odd_gen_map == 1) {
+  gens2 <- gens[seq(1, length(gens), 2)]
+}
+
+j <- 1
+#foreach(gen = gens, .packages = pkgs, .inorder = FALSE) %dopar% {
+for (gen in gens) {
+  #print(j)
+  NumGen_wtd_sub <- raster::subset(NumGen_wtd_stk3, 
+                                   grep(paste0("NumGen_", gen), names(NumGen_wtd_stk3)))
+  NumGen_msk <- NumGen_wtd_sub
+  # For Adults (no clim. stress exclusions)
+  # Mask out areas in adults raster that do not belong to the gen. of interest
+  Adults_wtd_sub <- overlay(Adults_wtd, NumGen_msk, fun = function(x, y) {
+    x[is.na(y[])] <- NA
+    return(x)
+  })
+  names(Adults_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
+  Adults_wtd_sublist[[j]] <- Adults_wtd_sub
+  # Do the same for AdultsExcl1 and AdultsExcl2 if relevant
+  if (exclusions_stressunits) {
+    #AdultsExcl1
+    AdultsExcl1_wtd_sub <- overlay(AdultsExcl1_wtd, NumGen_msk, 
+                                   fun = function(x, y) {
+                                     x[is.na(y[])] <- NA
+                                     return(x)
+                                   })
+    names(AdultsExcl1_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
+    AdultsExcl1_wtd_sublist[[j]] <- AdultsExcl1_wtd_sub
+    #AdultsExcl2
+    AdultsExcl2_wtd_sub <- overlay(AdultsExcl2_wtd, NumGen_msk, 
+                                   fun = function(x, y) {
+                                     x[is.na(y[])] <- NA
+                                     return(x)
+                                   })
+    names(AdultsExcl2_wtd_sub) <- paste("NumGen", gen, dats2, sep = "_")
+    AdultsExcl2_wtd_sublist[[j]] <- AdultsExcl2_wtd_sub
+  }
+  j <- j + 1
+}
+
+# Make one big stack from list of results
+NumGen_Adults_wtd <- do.call(stack, Adults_wtd_sublist)
+if (exclusions_stressunits) {
+  NumGen_AdultsExcl1_wtd <- do.call(stack, AdultsExcl1_wtd_sublist)
+  NumGen_AdultsExcl2_wtd <- do.call(stack, AdultsExcl2_wtd_sublist)
+}
+
+# Subset raster stack by date, extract generation data from layer name, 
+# convert to a data frame, and put it in a list
+if (exclusions_stressunits) {
+  AdultStg_byGen_list <- list(NumGen_Adults_wtd, NumGen_AdultsExcl1_wtd, 
+                              NumGen_AdultsExcl2_wtd)
+  names(AdultStg_byGen_list) <- c("Adults_brk", "AdultsExcl1_brk", 
+                                  "AdultsExcl2_brk")
+} else {
+  AdultStg_byGen_list <- list(NumGen_Adults_wtd)
+  names(AdultStg_byGen_list) <- c("Adults_brk")
+}
+
+#### * Life stage with no. of generations plots ####
+if (exclusions_stressunits) {
+  cat("\n\nDone with Lifestage with NumGen analysis\n\n", 
+      str_wrap("### SUMMARY MAP OUTPUT: LIFESTAGE W/ NO. OF GENS AND CLIMATE 
+               STRESS EXCL.", width = 80), " ###", sep = "",
+      file = Model_rlogging, append = TRUE)
+  cat("\n\nDone with Lifestage with NumGen analysis\n\n", 
+      str_wrap("SUMMARY MAP OUTPUT: LIFESTAGE W/ NO. OF GENS AND CLIMATE STRESS 
+               EXCL.\n", width = 80), "\n", sep = "")
+} else {
+  cat("\n\n### SUMMARY MAP OUTPUT: LIFESTAGE W/ NO. OF GENS. ###", sep = "",
+      file = Model_rlogging, append = TRUE)
+  cat("\n\nDone with Lifestage with NumGen analysis\n\n", 
+      str_wrap("SUMMARY MAP OUTPUT: LIFESTAGE W/ NO. OF GENS.\n", width = 80), 
+      "\n", sep = "")
+}
+
+if (odd_gen_map == 1) {
+  cat("\n\nPlotting odd generations only", file = Model_rlogging, 
+      append = TRUE) 
+}
+
+# Generate and save summary plots for "Lifestage by Generation" (currenlty only
+# doing these for adults)
+RegCluster(4)
+AdultStg_byGen_sum_maps <- foreach(j = 1:length(AdultStg_byGen_list), 
+                                   .packages = pkgs, .inorder = TRUE) %dopar% {
+                                     #for (j in 1:length(AdultStg_byGen_list)) {
+                                     nam <- paste0(names(AdultStg_byGen_list[j]))
+                                     # print(nam)
+                                     for (d in dats2) {
+                                       #  print(d)
+                                       df_list <- list()
+                                       stk_sub <- raster::subset(AdultStg_byGen_list[[j]], 
+                                                                 grep(d, names(AdultStg_byGen_list[[j]]))) # subet by date
+                                       
+                                       # For each stack layer, identify the generation, convert data to a 
+                                       # data frame and add it to a list
+                                       for (i in 1:nlayers(stk_sub)) {
+                                         r <- stk_sub[[i]]
+                                         gen <- substr(names(r), start = 8, stop = 8)
+                                         # Only convert to data frame if any values are not NA 
+                                         # and either greater than 0, or less than 0 (which indicates climate 
+                                         # stress exclusions)
+                                         if (any(values(r) >= 0 & !is.na(values(r))) | 
+                                             any(values(r) < 0 & !is.na(values(r)))) {
+                                           lyr_df <- ConvDF(r) # convert raster to a data frame
+                                           lyr_df$gen <- gen
+                                           colnames(lyr_df)[1] <- "value"
+                                           df_list[[i]] <- lyr_df # add to the list 
+                                         }
+                                       }
+                                       
+                                       # Merge the list into a single data frame - this has data from all 
+                                       # generations for a given date. Remove generations for which all values 
+                                       # are 0, otherwise will obscure data from other layers (other gens)
+                                       # Not doing this will produce erroneous bands of adults at southern edge
+                                       mrgd <- do.call(rbind, df_list) 
+                                       
+                                       # Optional: create summary maps for odd generations only - beginning for 
+                                       # 1st gen (i.e., 1, 3, 5, ..)
+                                       if (odd_gen_map == 1) { # should odd gens be plotted instead of all gens?
+                                         mrgd <- mrgd %>% filter(as.numeric(gen) %% 2 != 0)
+                                       }
+                                       
+                                       # Plot results as long as there are data in "mrgd2" - this data frame will 
+                                       # be empty only if "odd_gen_map == 1" and there are no data for Gen1, Gen3, 
+                                       # ... etc. (e.g., if there are only data for GenOW, which has been removed)
+                                       # Currently "other stages" (not adults) are colored gray - may want to 
+                                       # consider coloring them more similarly to which generation they belong to
+                                       if (nrow(mrgd) > 0) {
+                                         if (nam == "Adults_brk") {
+                                           PlotMap(mrgd, d, "Adult relative pop. size for each gen.", 
+                                                   "Adult relative\npop. size (peak)", "Misc_output/Adult_byGen")
+                                         } else if (nam == "AdultsExcl1_brk") {
+                                           PlotMap(mrgd, d, 
+                                                   "Adult relative pop. size for each gen. w/ climate stress exclusion",
+                                                   "Adult relative\npop. size (peak)", 
+                                                   "Misc_output/Adult_Excl1_byGen")
+                                         } else if (nam == "AdultsExcl2_brk") {
+                                           PlotMap(mrgd, d, 
+                                                   "Adult relative pop. size for each gen. w/ climate stress exclusion",
+                                                   "Adult relative\npop. size (peak)", 
+                                                   "Misc_output/Adult_Excl2_byGen")
+                                         }
+                                       } else {
+                                         cat("\n\nWARNING: Adult w/ NumGen results for", nam, "on", d, 
+                                             "\nnot plotted - no odd generation data for this date", 
+                                             file = Model_rlogging, append = TRUE)
+                                       }
+                                     }
+                                   }
+
+stopCluster(cl)
+
+cat("\n\nDone with Lifestage with NumGen summary maps\n", 
+    file = Model_rlogging, append = TRUE)
+cat("\n\nDone with Lifestage with NumGen summary maps\n\n")
 
 #### * Analyses and map production all done - wrap-up ####
 processing_exectime <- toc(quiet = TRUE)
 processing_exectime <- (processing_exectime$toc - processing_exectime$tic) / 60 
 
-cat("\n\n### Done w/ final analyses and map production ###\n", 
+cat("\n### Done w/ final analyses and map production ###\n", 
     "Run time for analyses and map production = ", 
     round(processing_exectime, digits = 2), " min\n", sep = "", 
     "Deleting, renaming, and moving some remaining files\n",
