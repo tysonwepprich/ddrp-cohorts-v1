@@ -10,15 +10,28 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "lubridate", "mapdata", "mgsub", "optparse", "parallel",
           "purrr", "RColorBrewer", "rgdal", "raster", "readr", "sp", "stringr", 
           "tidyr", "tictoc", "tools", "viridis")
-# ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library, 
-              # lib.loc = "/usr/local/lib64/R/library/", character.only = TRUE))))
-ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library, 
-              lib.loc = "/usr/lib64/R/library/", character.only = TRUE)))) #GRUB
+
+# change this to switch paths to Tyson's Hopper/Grub values
+server <- "hopper" # "grub"
+
+# Library path
+if(server == "hopper"){
+  ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library,
+                                                                lib.loc = "/usr/local/lib64/R/library/", character.only = TRUE))))
+}
+if(server == "grub"){
+  ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library, 
+                                                                lib.loc = "/usr/lib64/R/library/", character.only = TRUE)))) #GRUB
+}
 
 # Load collection of functions for this model
-# source("/usr/local/dds/DDRP_B1/DDRP_cohorts_v1_funcs.R")
-source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #GRUB
-# source("/usr/local/dds/DDRP_DOD/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #HOPPER
+# source("/usr/local/dds/DDRP_B1/DDRP_cohorts_v1_funcs.R") #BRITTANY
+if(server == "grub"){
+  source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #GRUB
+}
+if(server == "hopper"){
+  source("/usr/local/dds/DDRP_DOD/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #HOPPER
+}
 
 # Bring in states feature for summary maps (PNG files)
 # Requires these libraries: "mapdata" and "maptools"
@@ -157,18 +170,33 @@ if (!is.na(opts[1])) {
 # (2). DIRECTORY INIT ------
 
 #### * Param inputs - species params; thresholds, weather, etc. ####
-# params_dir <- "/usr/local/dds/DDRP_B1/spp_params/"
-params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/" # tyson's GRUB
-# params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/" # tyson's HOPPER
-
+# params_dir <- "/usr/local/dds/DDRP_B1/spp_params/" # BRITTANY
+if(server == "grub"){
+  params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/" # tyson's GRUB
+}
+if(server == "hopper"){
+  params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/" # tyson's HOPPER
+}
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
 
-base_dir <- "/data/PRISM/"
-prism_dir <- paste0(base_dir, start_year)
+if(forecast_data == "PRISM"){
+  base_dir <- "/data/PRISM/"
+  prism_dir <- paste0(base_dir, start_year)
+}
 
-# # North America Daymet data
-# base_dir <- "/home/tyson/REPO/photovoltinism/daymet/"
-# prism_dir <- paste0(base_dir, start_year)
+if(forecast_data == "DAYMET"){
+  # North America Daymet data
+  base_dir <- "/home/tyson/REPO/photovoltinism/daymet/"
+  prism_dir <- paste0(base_dir, start_year)
+}
+
+if(forecast_data == "MACA"){
+  base_dir <- "/home/macav2metdata"
+  prism_dir <- paste0(base_dir, start_year)
+}
+
+
+# # CONUS MACAv2 forecasts
 
 cat("\nBASE DIR: ", base_dir, "\n")
 cat("\nWORKING DIR: ", prism_dir, "\n")
@@ -179,15 +207,19 @@ cat("\nWORKING DIR: ", prism_dir, "\n")
 
 # output_dir <- paste0("/home/httpd/html/CAPS/",spp, "_cohorts")
 # output_dir <- paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir)
-output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
-                     out_dir,"/") # Tyson's GRUB
-# output_dir <- paste0("/home/httpd/html/dodtmp/", out_dir) # Tyson's HOPPER
+if (server == "grub"){
+  output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
+                       out_dir,"/") # Tyson's GRUB
+}
+if (server == "hopper"){
+  output_dir <- paste0("/home/httpd/html/dodtmp/", out_dir) # Tyson's HOPPER
+}
 
 # Remove all files if output_dir exists, or else create output_dir
 if (file.exists(output_dir)) {
   unlink(paste0(output_dir, "/*"), recursive = TRUE, force = TRUE)
   cat("\n", str_wrap(paste0("EXISTING OUTPUT DIR: ", output_dir, 
-                     "; removing all files\n"), width = 80), sep = "") 
+                            "; removing all files\n"), width = 80), sep = "") 
 } else {
   dir.create(output_dir)
   cat("NEW OUTPUT DIR:", output_dir, "\n")
@@ -209,19 +241,22 @@ cat(paste0(rep("#", 36), collapse = ""), "\n",
 cat("BASE DIR: ", base_dir, "\n", file = Model_rlogging, append = TRUE)
 cat("WORKING DIR: ", prism_dir, "\n", file = Model_rlogging, append = TRUE)
 cat(str_wrap(paste0("EXISTING OUTPUT DIR: ", output_dir, 
-    "; removing all files"), width = 80), "\n\n", sep = "", 
+                    "; removing all files"), width = 80), "\n\n", sep = "", 
     file = Model_rlogging, append = TRUE)
 
 # Push out a message file with all R error messages
 # msg <- file(paste0("/home/httpd/html/CAPS/",out_dir, "/rmessages.txt"),
-            # open="wt")
+# open="wt")
 # msg <- file(paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir,
 #                    "/Logs_metadata/rmessages.txt"), open = "wt")
-msg <- file(paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
+if (server == "grub"){
+  msg <- file(paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
                      out_dir,"/Logs_metadata/rmessages.txt"), open = "wt") #GRUB
-# msg <- file(paste0("/home/httpd/html/dodtmp/", out_dir, 
-#                    "/rmessages.txt"), open="wt") # Tyson's HOPPER
-
+}
+if (server == "hopper"){
+  msg <- file(paste0("/home/httpd/html/dodtmp/", out_dir,
+                     "/rmessages.txt"), open="wt") # Tyson's HOPPER
+}
 sink(msg, type = "message")
 
 # (3). PARAMETER AND SETTINGS SETUP ----- 
@@ -272,7 +307,7 @@ if (is.numeric(start_year)) {
     }
     
   } else if (start_year %% 4 == 0 & keep_leap == 0) {
-     cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
+    cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
                         not be included in the model"), width = 80), "\n", 
         file = Model_rlogging, append = TRUE)
   } else if (start_year %% 4 != 0) {
@@ -409,12 +444,12 @@ if (exclusions_stressunits) {
 # Document Pest Event Map parameter values, if applicable
 if (pems) {
   cat("\n \n Pest Event Map parameters",
-  "\n Number of generations to make Pest Event Maps (PEMs): ", PEMnumgens,
-  "\n Egg Event DDs and Label: ", eggEventDD, " (", eggEventLabel,")", 
-  "\n Larvae Event DDs and Label: ", larvaeEventDD, " (", larvaeEventLabel, ")",
-  "\n Pupae Event DDs and Label: ", pupaeEventDD, " (", pupaeEventLabel, ")",
-  "\n Adult Event DDs and Label: ", adultEventDD, " (", adultEventLabel, ")",
-  sep = "", file = metadata, append = TRUE)
+      "\n Number of generations to make Pest Event Maps (PEMs): ", PEMnumgens,
+      "\n Egg Event DDs and Label: ", eggEventDD, " (", eggEventLabel,")", 
+      "\n Larvae Event DDs and Label: ", larvaeEventDD, " (", larvaeEventLabel, ")",
+      "\n Pupae Event DDs and Label: ", pupaeEventDD, " (", pupaeEventLabel, ")",
+      "\n Adult Event DDs and Label: ", adultEventDD, " (", adultEventLabel, ")",
+      sep = "", file = metadata, append = TRUE)
 }
 
 cat("\n\n### Model Input Parameters ###\n Start Year:", start_year, 
@@ -584,7 +619,7 @@ if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
       m <- as.matrix(crop(raster(tmin), tile))
     }
   
-# If region is not CONUS or EAST, simply crop temp files by the single template
+  # If region is not CONUS or EAST, simply crop temp files by the single template
 } else {
   cat("Cropping tmax and tmin tiles for", region_param, "\n", 
       file = Model_rlogging, append = TRUE)
@@ -592,13 +627,13 @@ if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
   
   tmax_list <- foreach(t = tmaxfiles, .packages = "raster", 
                        .inorder = TRUE) %dopar% {
-    m <- as.matrix(crop(raster(t), template))
-  }
+                         m <- as.matrix(crop(raster(t), template))
+                       }
   
   tmin_list <- foreach(t = tminfiles, .packages = "raster", 
                        .inorder = TRUE) %dopar% {
-    m <- as.matrix(crop(raster(t), template))
-  }
+                         m <- as.matrix(crop(raster(t), template))
+                       }
   
   stopCluster(cl)
 }
@@ -669,8 +704,8 @@ tryCatch(
         cohort_vec <- unname(unlist(c)) # change to an unnamed vector
         foreach(cohort = cohort_vec, .packages = pkgs, 
                 .inorder = FALSE) %dopar% {
-          DailyLoop(cohort, NA, template)
-        }
+                  DailyLoop(cohort, NA, template)
+                }
         
       }
     }
@@ -679,7 +714,7 @@ tryCatch(
     cat("Error in Daily Loop - stopped run - check rmessages file\n", 
         file = Model_rlogging, append = TRUE) 
     cat("\nError in Daily Loop - stopped run - check rmessages file\n")
-})
+  })
 
 stopCluster(cl)
 
@@ -726,25 +761,25 @@ if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
   
   mrg_by_type <- foreach(type = type_list_split, .packages = pkgs, 
                          .inorder = FALSE) %dopar% {
-    type_vec <- unname(unlist(type)) # Change to an unnamed vector
-    for (t in type_vec) {
-      # If type is exclusion, stressunits, or ddtotal files, 
-      # then just do cohort 1; no other cohorts present
-      if (grepl("Stress_Excl|Stress_Units|DDtotal", t)) {
-        CombineMaps(brick_files, t, "1")
-        cat("Merged", t, "tiles for cohort 1\n", 
-            file = Model_rlogging, append = TRUE)
-      # If another file type, then merge tiles for all cohorts
-      } else {
-        MrgTiles <- foreach(c = cohorts, .packages = pkgs, 
-                            .inorder = TRUE) %dopar% {
-          CombineMaps(brick_files, t, c)
-          cat("Merged", t, "tiles for cohort", c, "\n", 
-              file = Model_rlogging, append = TRUE)
-        }
-      } 
-    }
-  }
+                           type_vec <- unname(unlist(type)) # Change to an unnamed vector
+                           for (t in type_vec) {
+                             # If type is exclusion, stressunits, or ddtotal files, 
+                             # then just do cohort 1; no other cohorts present
+                             if (grepl("Stress_Excl|Stress_Units|DDtotal", t)) {
+                               CombineMaps(brick_files, t, "1")
+                               cat("Merged", t, "tiles for cohort 1\n", 
+                                   file = Model_rlogging, append = TRUE)
+                               # If another file type, then merge tiles for all cohorts
+                             } else {
+                               MrgTiles <- foreach(c = cohorts, .packages = pkgs, 
+                                                   .inorder = TRUE) %dopar% {
+                                                     CombineMaps(brick_files, t, c)
+                                                     cat("Merged", t, "tiles for cohort", c, "\n", 
+                                                         file = Model_rlogging, append = TRUE)
+                                                   }
+                             } 
+                           }
+                         }
   stopCluster(cl)
   cat("\nDone merging tiles\n", file = Model_rlogging, append = TRUE)
   cat("\nDone merging tiles\n")
@@ -827,26 +862,26 @@ if (asp >= 1.7) {
 
 # Theme to use for plots
 mytheme <- theme(legend.text = element_text(size = rel(1)), 
-  legend.title = element_text(size = rel(1.2), face = "bold"),
-  legend.position = "right", 
-  legend.justification = "left",
-  legend.margin = margin(t = 0, r = 0.10, b = 0, l = 0.10, unit = "cm"),
-  legend.key.width = unit(legend_units, "line"), 
-  legend.key.height = unit(legend_units, "line"),
-  plot.title = element_text(size = rel(1.55), face = "bold", hjust = 0.5, 
-                            vjust = -3, lineheight = 1, 
-                            margin = margin(t = 0, r = 0, b = 2, l = 0)), 
-  plot.subtitle = element_text(size = rel(1.25), hjust = 0.5, vjust = -3, 
-                               lineheight = 1, 
-                               margin = margin(t = 5, r = 0, b = 15, l = 0)),
-  plot.margin = margin(t = 0.05, r = 0.25, b = 0.05, l = 0.25, unit = "cm"),
-  panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
-  panel.background = element_blank(), panel.border = element_blank(),
-  axis.title.x = element_blank(), 
-  axis.title.y = element_blank(), 
-  axis.ticks = element_blank(),
-  axis.text.x = element_blank(), 
-  axis.text.y = element_blank())
+                 legend.title = element_text(size = rel(1.2), face = "bold"),
+                 legend.position = "right", 
+                 legend.justification = "left",
+                 legend.margin = margin(t = 0, r = 0.10, b = 0, l = 0.10, unit = "cm"),
+                 legend.key.width = unit(legend_units, "line"), 
+                 legend.key.height = unit(legend_units, "line"),
+                 plot.title = element_text(size = rel(1.55), face = "bold", hjust = 0.5, 
+                                           vjust = -3, lineheight = 1, 
+                                           margin = margin(t = 0, r = 0, b = 2, l = 0)), 
+                 plot.subtitle = element_text(size = rel(1.25), hjust = 0.5, vjust = -3, 
+                                              lineheight = 1, 
+                                              margin = margin(t = 5, r = 0, b = 15, l = 0)),
+                 plot.margin = margin(t = 0.05, r = 0.25, b = 0.05, l = 0.25, unit = "cm"),
+                 panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+                 panel.background = element_blank(), panel.border = element_blank(),
+                 axis.title.x = element_blank(), 
+                 axis.title.y = element_blank(), 
+                 axis.ticks = element_blank(),
+                 axis.text.x = element_blank(), 
+                 axis.text.y = element_blank())
 
 ### * DDtotal and climate stress ####
 
@@ -881,46 +916,46 @@ RegCluster(ncohort)
 #for (dat in dats_list) {
 stress_results <- foreach(dat = dats_list, .packages = pkgs, 
                           .inorder = TRUE) %dopar% {
-  dat_vec <- unname(unlist(dat)) # change to an unnamed vector
-    for (d in dat_vec) {
-      # get position (layer) of date in raster brick
-      lyr <- which(dats2 == d)
-      # make the plots
-      PlotMap(DDtotal_brick[[lyr]],d, "Degree day (DD) accumulation", 
-              "Degree Days", "Misc_output/DDtotal")
-      
-      if (exclusions_stressunits) {
-        # Bring in climate stress bricks for each cohort
-        # Chill stress unit accumulation
-        chillunitsCUM_patrn <- glob2rx("*Chill_Stress_Units*1*.tif$")
-        chillunitsCUM_brick <- brick(list.files(pattern = chillunitsCUM_patrn))
-        PlotMap_stress(chillunitsCUM_brick[[lyr]], d, chillstress_units_max1,
-                       chillstress_units_max2, "Chill stress units", 
-                       "Chill Stress Units", "Misc_output/Chill_Stress_Units")
-        # Chill stress exlusions (-1 = moderate; -2 = severe)
-        chillEXCL_patrn <- glob2rx("*Chill_Stress_Excl*1*.tif$")
-        chillEXCL_brick <- brick(list.files(pattern = chillEXCL_patrn))
-        PlotMap(chillEXCL_brick[[lyr]], d,  "Chill stress exclusion", 
-                "Exclusion status", "Misc_output/Chill_Stress_Excl")
-        # Heat unit accumulation
-        heatunitsCUM_patrn <- glob2rx("*Heat_Stress_Units*1*.tif$")
-        heatunitsCUM_brick <- brick(list.files(pattern = heatunitsCUM_patrn))          
-        PlotMap_stress(heatunitsCUM_brick[[lyr]], d, heatstress_units_max1,
-                       heatstress_units_max2, "Heat stress units", 
-                       "Heat Stress Units", "Misc_output/Heat_Stress_Units")
-        # Heat stress exclusions (-1 = moderate; -2 = severe)
-        heatEXCL_patrn <- glob2rx("*Heat_Stress_Excl*1*.tif$")
-        heatEXCL_brick <- brick(list.files(pattern = heatEXCL_patrn))
-        PlotMap(heatEXCL_brick[[lyr]], d,  "Heat stress exclusion", 
-                "Exclusion status", "Misc_output/Heat_Stress_Excl")
-        # All stress exclusions (chill stress + heat stress exclusions)
-        AllEXCL_patrn <- glob2rx("*All_Stress_Excl*1*.tif$")
-        AllEXCL_brick <- brick(list.files(pattern = AllEXCL_patrn))
-        PlotMap(AllEXCL_brick[[lyr]], d,  "All stress exclusion", 
-                "Exclusion status", "All_Stress_Excl")
-      }
-    }
-}
+                            dat_vec <- unname(unlist(dat)) # change to an unnamed vector
+                            for (d in dat_vec) {
+                              # get position (layer) of date in raster brick
+                              lyr <- which(dats2 == d)
+                              # make the plots
+                              PlotMap(DDtotal_brick[[lyr]],d, "Degree day (DD) accumulation", 
+                                      "Degree Days", "Misc_output/DDtotal")
+                              
+                              if (exclusions_stressunits) {
+                                # Bring in climate stress bricks for each cohort
+                                # Chill stress unit accumulation
+                                chillunitsCUM_patrn <- glob2rx("*Chill_Stress_Units*1*.tif$")
+                                chillunitsCUM_brick <- brick(list.files(pattern = chillunitsCUM_patrn))
+                                PlotMap_stress(chillunitsCUM_brick[[lyr]], d, chillstress_units_max1,
+                                               chillstress_units_max2, "Chill stress units", 
+                                               "Chill Stress Units", "Misc_output/Chill_Stress_Units")
+                                # Chill stress exlusions (-1 = moderate; -2 = severe)
+                                chillEXCL_patrn <- glob2rx("*Chill_Stress_Excl*1*.tif$")
+                                chillEXCL_brick <- brick(list.files(pattern = chillEXCL_patrn))
+                                PlotMap(chillEXCL_brick[[lyr]], d,  "Chill stress exclusion", 
+                                        "Exclusion status", "Misc_output/Chill_Stress_Excl")
+                                # Heat unit accumulation
+                                heatunitsCUM_patrn <- glob2rx("*Heat_Stress_Units*1*.tif$")
+                                heatunitsCUM_brick <- brick(list.files(pattern = heatunitsCUM_patrn))          
+                                PlotMap_stress(heatunitsCUM_brick[[lyr]], d, heatstress_units_max1,
+                                               heatstress_units_max2, "Heat stress units", 
+                                               "Heat Stress Units", "Misc_output/Heat_Stress_Units")
+                                # Heat stress exclusions (-1 = moderate; -2 = severe)
+                                heatEXCL_patrn <- glob2rx("*Heat_Stress_Excl*1*.tif$")
+                                heatEXCL_brick <- brick(list.files(pattern = heatEXCL_patrn))
+                                PlotMap(heatEXCL_brick[[lyr]], d,  "Heat stress exclusion", 
+                                        "Exclusion status", "Misc_output/Heat_Stress_Excl")
+                                # All stress exclusions (chill stress + heat stress exclusions)
+                                AllEXCL_patrn <- glob2rx("*All_Stress_Excl*1*.tif$")
+                                AllEXCL_brick <- brick(list.files(pattern = AllEXCL_patrn))
+                                PlotMap(AllEXCL_brick[[lyr]], d,  "All stress exclusion", 
+                                        "Exclusion status", "All_Stress_Excl")
+                              }
+                            }
+                          }
 
 stopCluster(cl)
 
@@ -961,7 +996,7 @@ if (!pems & !exclusions_stressunits) {
 } else if (pems & exclusions_stressunits) {
   cat("\n\n", str_wrap("Done with DDtotal, climate stress exclusions, and 
                        climate stress unit maps", width = 80), "\n\n", 
-              str_wrap("### SUMMARY MAPS AND RASTER OUTPUT: PEST EVENT MAPS W/
+      str_wrap("### SUMMARY MAPS AND RASTER OUTPUT: PEST EVENT MAPS W/
                        CLIMATE STRESS EXCL. ###", width = 80), sep = "",
       file = Model_rlogging, append = TRUE)
   cat("\n", str_wrap("Done with DDtotal, climate stress exclusions, and climate 
@@ -985,20 +1020,20 @@ if (pems) {
   # Create a data frame with PEM labels - the labels will be joined to the 
   # appropriate PEM file below
   pem_event_labels <- cbind(data.frame("pem_types" = pem_types), 
-    data.frame("gen" = substr(pem_types, start = 5, stop = 5)), 
-    data.frame("stg" = substr(pem_types, start = 4, stop = 4)))
+                            data.frame("gen" = substr(pem_types, start = 5, stop = 5)), 
+                            data.frame("stg" = substr(pem_types, start = 4, stop = 4)))
   pem_event_labels <- pem_event_labels %>%
     mutate(genLabel = ifelse(gen == 0, "date of OW gen.", 
-                      ifelse(gen == 1, "date of 1st gen.", 
-                      ifelse(gen == 2, "date of 2nd gen.", 
-                      ifelse(gen == 3, "date of 3rd gen.", 
-                      ifelse(gen == 4, "date of 4th gen.", NA)))))) %>% 
+                             ifelse(gen == 1, "date of 1st gen.", 
+                                    ifelse(gen == 2, "date of 2nd gen.", 
+                                           ifelse(gen == 3, "date of 3rd gen.", 
+                                                  ifelse(gen == 4, "date of 4th gen.", NA)))))) %>% 
     mutate(eventLabel = ifelse(stg == "e", eggEventLabel, 
-                        ifelse(stg == "l", larvaeEventLabel, 
-                        ifelse(stg == "p", pupaeEventLabel, 
-                        ifelse(stg == "a", adultEventLabel, NA))))) %>%
+                               ifelse(stg == "l", larvaeEventLabel, 
+                                      ifelse(stg == "p", pupaeEventLabel, 
+                                             ifelse(stg == "a", adultEventLabel, NA))))) %>%
     mutate(finalLabel = paste(genLabel, eventLabel, sep = " ")) %>% 
-                      dplyr::select(pem_types, finalLabel)
+    dplyr::select(pem_types, finalLabel)
   
   # Which PEM is for the OW stage?
   OW_pem <- paste0("PEM", tolower(substr(owstage, start = 2, stop = 2)), "0")
@@ -1008,98 +1043,98 @@ if (pems) {
   RegCluster(ncohort)
   
   pem_results <- foreach(type = pem_types, .packages = pkgs, 
-                        .inorder = FALSE) %dopar% {
-  #for (type in pem_types) {
-    #print(type)
-    # Find files by type (e.g., "PEMe1" for each cohort) 
-    files_by_type <- pem_files[grep(pattern = type, x = pem_files, 
-                                    fixed = TRUE)] 
-    # Change 0 values to NA so they are not averaged 
-    pem_stk <- stack(files_by_type)
-    pem_stk[pem_stk == 0] <- NA
-    
-    # Remove PEM raster brick files if all PEM values are 0 because 
-    # there's no point in plotting an all zero result
-    if (sum(matrix(pem_stk), na.rm = TRUE) == 0) {
-      unlink(list.files(pattern = glob2rx(paste0("*", type, "_*tif$"))))
-    # Remove PEM raster brick file if there is only a single unique value
-    # This may happen for the last day of sampling period? (check on this)
-    } else if (length(unique(values(pem_stk))) < 3) {
-        vals <- unique(getValues(pem_stk))
-        vals <- vals[!is.na(vals)]
-        if (length(vals) == 1) {
-          unlink(list.files(pattern = glob2rx(paste0("*", type, "_*tif$"))))
-        }
-      # If PEM raster brick has data, then process and plot it
-    } else {
-    # Create event label to be used for making summary maps
-      eventLabel_df <- dplyr::filter(pem_event_labels, pem_types == type) %>% 
-        dplyr::select(finalLabel) %>%
-        mutate(., finalLabel = ifelse(type == OW_pem, paste("date of OW gen.", 
-                                              OWEventLabel), finalLabel))          
-        eventLabel <- paste(eventLabel_df$finalLabel)
-      # Remove layers in the PEM stack if they are all NA, and print warning 
-      # If this happens, should maybe change cohort emergence params
-      zero_sum <- cellStats(pem_stk, sum)
-      pem_na <- pem_stk[[which(zero_sum == 0)]]
-      pem_stk <- pem_stk[[which(zero_sum > 0)]]
-      if (nlayers(pem_stk) < ncohort) {
-        cat(str_wrap("WARNING: removed", names(pem_na), 
-            "layer because all values were NA - check emergence parameters \n",
-            width = 80), file = Model_rlogging, append = TRUE)
-        cat("\nWARNING: removed", names(pem_na), "layer because all values 
+                         .inorder = FALSE) %dopar% {
+                           #for (type in pem_types) {
+                           #print(type)
+                           # Find files by type (e.g., "PEMe1" for each cohort) 
+                           files_by_type <- pem_files[grep(pattern = type, x = pem_files, 
+                                                           fixed = TRUE)] 
+                           # Change 0 values to NA so they are not averaged 
+                           pem_stk <- stack(files_by_type)
+                           pem_stk[pem_stk == 0] <- NA
+                           
+                           # Remove PEM raster brick files if all PEM values are 0 because 
+                           # there's no point in plotting an all zero result
+                           if (sum(matrix(pem_stk), na.rm = TRUE) == 0) {
+                             unlink(list.files(pattern = glob2rx(paste0("*", type, "_*tif$"))))
+                             # Remove PEM raster brick file if there is only a single unique value
+                             # This may happen for the last day of sampling period? (check on this)
+                           } else if (length(unique(values(pem_stk))) < 3) {
+                             vals <- unique(getValues(pem_stk))
+                             vals <- vals[!is.na(vals)]
+                             if (length(vals) == 1) {
+                               unlink(list.files(pattern = glob2rx(paste0("*", type, "_*tif$"))))
+                             }
+                             # If PEM raster brick has data, then process and plot it
+                           } else {
+                             # Create event label to be used for making summary maps
+                             eventLabel_df <- dplyr::filter(pem_event_labels, pem_types == type) %>% 
+                               dplyr::select(finalLabel) %>%
+                               mutate(., finalLabel = ifelse(type == OW_pem, paste("date of OW gen.", 
+                                                                                   OWEventLabel), finalLabel))          
+                             eventLabel <- paste(eventLabel_df$finalLabel)
+                             # Remove layers in the PEM stack if they are all NA, and print warning 
+                             # If this happens, should maybe change cohort emergence params
+                             zero_sum <- cellStats(pem_stk, sum)
+                             pem_na <- pem_stk[[which(zero_sum == 0)]]
+                             pem_stk <- pem_stk[[which(zero_sum > 0)]]
+                             if (nlayers(pem_stk) < ncohort) {
+                               cat(str_wrap("WARNING: removed", names(pem_na), 
+                                            "layer because all values were NA - check emergence parameters \n",
+                                            width = 80), file = Model_rlogging, append = TRUE)
+                               cat("\nWARNING: removed", names(pem_na), "layer because all values 
             were NA - check emergence parameters \n\n")
-      }
-          
-      # Calc. avg. date of pest event across cohorts
-      # Then save raster brick, and create and save summary maps
-      avg_PEM <- calc(pem_stk, fun = function(x, na.rm= TRUE) { 
-        mean(x, na.rm = TRUE) }) # average in day of event among cohorts
-      names(avg_PEM) <- "Avg" # name layer for use below
-      SaveRaster2(avg_PEM, paste("Avg", type, last_date, sep = "_"), 
-                  "INT2U", paste("- Avg.", eventLabel))
-      PlotMap(avg_PEM, last_date, paste("Avg.", eventLabel, sep = " "), 
-              paste("Avg.", eventLabel, sep = " "), 
-              paste("Avg", type, sep = "_"))
-          
-      # Calc. the earliest date of pest event across cohorts 
-      # Then save raster brick, and create and save summary maps
-      min_PEM <- calc(pem_stk, fun = function(x, na.rm= TRUE) { min(x) })
-      names(min_PEM) <- "Earliest" # name layer for use below
-      SaveRaster2(min_PEM, paste("Earliest", type, last_date, sep = "_"), 
-                  "INT2U", paste("- Earliest", eventLabel))
-      PlotMap(min_PEM, last_date, paste("Earliest", eventLabel, sep = " "), 
-              paste("Earliest", eventLabel, sep = " "), 
-              paste("Earliest", type, sep = "_"))
-          
-      # If climate stress exclusions are specified, then take PEM results from 
-      # above and substitute values where the species is under severe stress 
-      # only with -1 (Excl1), and areas where the species is under both
-      # moderate and severe stress with -1 and -2, respectively (Excl2)
-      if (exclusions_stressunits) {
-        PEM_list <- list(avg_PEM, min_PEM)
-        for (PEM in PEM_list) {
-          nam <- names(PEM)
-          
-          # Do calculations
-          PEM_excl1 <- Rast_Subs_Excl1(PEM)[[1]] # Sev. stress only (Excl1) 
-          PEM_excl2 <- Rast_Subs_Excl2(PEM)[[1]] # Sev. and mod. stress (Excl2) 
-              
-          # Save raster brick results; create and save summary maps
-          SaveRaster2(PEM_excl1, paste0(nam, "_", type, "Excl1_", last_date), 
-                      "INT2S", paste("-", nam, eventLabel))
-          SaveRaster2(PEM_excl2, paste0(nam, "_", type, "Excl2_", last_date), 
-                      "INT2S", paste("-", nam, eventLabel))
-          PlotMap(PEM_excl1, last_date, paste0(nam, " ", eventLabel, 
-                  " w/ climate stress exclusion"), paste0(nam, " ", eventLabel),
-                  paste0(nam, "_", type, "Excl1"))
-          PlotMap(PEM_excl2, last_date, paste0(nam, " ", eventLabel, 
-                  " w/ climate stress exclusion"), paste0(nam, " ", eventLabel), 
-                  paste0(nam, "_", type, "Excl2"))
-          }
-        }
-      }
-  }
+                             }
+                             
+                             # Calc. avg. date of pest event across cohorts
+                             # Then save raster brick, and create and save summary maps
+                             avg_PEM <- calc(pem_stk, fun = function(x, na.rm= TRUE) { 
+                               mean(x, na.rm = TRUE) }) # average in day of event among cohorts
+                             names(avg_PEM) <- "Avg" # name layer for use below
+                             SaveRaster2(avg_PEM, paste("Avg", type, last_date, sep = "_"), 
+                                         "INT2U", paste("- Avg.", eventLabel))
+                             PlotMap(avg_PEM, last_date, paste("Avg.", eventLabel, sep = " "), 
+                                     paste("Avg.", eventLabel, sep = " "), 
+                                     paste("Avg", type, sep = "_"))
+                             
+                             # Calc. the earliest date of pest event across cohorts 
+                             # Then save raster brick, and create and save summary maps
+                             min_PEM <- calc(pem_stk, fun = function(x, na.rm= TRUE) { min(x) })
+                             names(min_PEM) <- "Earliest" # name layer for use below
+                             SaveRaster2(min_PEM, paste("Earliest", type, last_date, sep = "_"), 
+                                         "INT2U", paste("- Earliest", eventLabel))
+                             PlotMap(min_PEM, last_date, paste("Earliest", eventLabel, sep = " "), 
+                                     paste("Earliest", eventLabel, sep = " "), 
+                                     paste("Earliest", type, sep = "_"))
+                             
+                             # If climate stress exclusions are specified, then take PEM results from 
+                             # above and substitute values where the species is under severe stress 
+                             # only with -1 (Excl1), and areas where the species is under both
+                             # moderate and severe stress with -1 and -2, respectively (Excl2)
+                             if (exclusions_stressunits) {
+                               PEM_list <- list(avg_PEM, min_PEM)
+                               for (PEM in PEM_list) {
+                                 nam <- names(PEM)
+                                 
+                                 # Do calculations
+                                 PEM_excl1 <- Rast_Subs_Excl1(PEM)[[1]] # Sev. stress only (Excl1) 
+                                 PEM_excl2 <- Rast_Subs_Excl2(PEM)[[1]] # Sev. and mod. stress (Excl2) 
+                                 
+                                 # Save raster brick results; create and save summary maps
+                                 SaveRaster2(PEM_excl1, paste0(nam, "_", type, "Excl1_", last_date), 
+                                             "INT2S", paste("-", nam, eventLabel))
+                                 SaveRaster2(PEM_excl2, paste0(nam, "_", type, "Excl2_", last_date), 
+                                             "INT2S", paste("-", nam, eventLabel))
+                                 PlotMap(PEM_excl1, last_date, paste0(nam, " ", eventLabel, 
+                                                                      " w/ climate stress exclusion"), paste0(nam, " ", eventLabel),
+                                         paste0(nam, "_", type, "Excl1"))
+                                 PlotMap(PEM_excl2, last_date, paste0(nam, " ", eventLabel, 
+                                                                      " w/ climate stress exclusion"), paste0(nam, " ", eventLabel), 
+                                         paste0(nam, "_", type, "Excl2"))
+                               }
+                             }
+                           }
+                         }
   stopCluster(cl)
 }
 
@@ -1156,177 +1191,177 @@ stg_nonOW <- substring(owstage, 2)
 RegCluster(3)
 
 Wtd_Lfstg_others <-  foreach(stg = stage_list, .packages = pkgs, 
-                                 .inorder = TRUE) %dopar% {
-#for (stg in stage_list) {
-  # Get stage number of stage, and then rename to a more descriptive name
-  stg_num <- match(stg, stgorder)
-  stg_nam <- mgsub(string = stg, pattern = 
-                     c("OE", "OL", "OP", "OA", "E", "L", "P", "A"), 
-                   replacement = c("OWegg", "OWlarvae", "OWpupae", "OWadult",
-                                   "Egg", "Larvae", "Pupae", "Adult"))
-  # Comment
-  if (stg != stg_nonOW) {
-    ### Weight the rasters ###
-    # "mapply" (or parallel version = mcmapply) requires two input lists of the 
-    # same length, and outputs a list of bricks for each cohort with nlayer = # 
-    # of sampling pts. For example, if there are 7 cohorts sampled each month of 
-    # yr (12 mon + end of year), then rast_wtd will be a list of 7 cohorts each 
-    # w/ 13 layers (13 * 7 = 91 layers). "mcmapply" can be used for increased 
-    # speed, but it really overloads memory. 
-    
-    # For each life stage, extract data from raster brick, and multiple it by 
-    # the rel. pop size of each cohort. The result is a list of raster bricks 
-    # that provide the relative pop. size of each cohort for each date.
-    Lfstg_wtd_list <- mapply(function(x, y) {
-      calc((brick(x) == stg_num), 
-           fun = function(z) {
-             round(100 * z) * y
-          })
-    }, x = Lfstg_fls, y = relpopsize)
-    
-    # The results from previous step need to be summed across all cohort. This 
-    # produces a single raster brick in which each layer represents the relative 
-    # population size of each cohort for each date.
-    # "Reduce" accomplishes this task.
-    Lfstg_wtd_brk <- Reduce("+", Lfstg_wtd_list) 
-    SaveRaster2(Lfstg_wtd_brk, paste0("Misc_output/", stg_nam), "INT2U", 
-                paste("-", stg_nam, "relative pop. size for all", 
-                      nlayers(Lfstg_wtd_brk), "dates")) 
-    
-    # Create and save summary maps
-    Lfstg_plots <- mclapply(1:nlayers(Lfstg_wtd_brk), function(lyr) {
-        lyr_name <- paste0(dats2[[lyr]])
-        PlotMap(Lfstg_wtd_brk[[lyr]], lyr_name, 
-                paste0(stg_nam, " relative pop. size"), 
-                "Relative pop. size", paste0("Misc_output/", stg_nam))
-    }, mc.cores = 3)
-    
-    # If climate stress exclusions are specified, then take weighted lifestage 
-    # results from above and substitute values where the species is under severe 
-    # stress only with -1 (Excl1), and areas where the species is both moderate 
-    # and severe stress with -1 and -2, respectively (Excl2)
-    if (exclusions_stressunits) {
-      Lfstg_wtd_excl1 <- Rast_Subs_Excl1(Lfstg_wtd_brk)  
-      Lfstg_wtd_excl2 <- Rast_Subs_Excl2(Lfstg_wtd_brk)
-      
-      # Make a raster brick of results and save the brick
-      Lfstg_wtd_excl1_brk <- do.call(brick, Lfstg_wtd_excl1)
-      Lfstg_wtd_excl2_brk <- do.call(brick, Lfstg_wtd_excl2)
-      SaveRaster2(Lfstg_wtd_excl1_brk, 
-                  paste0("Misc_output/", stg_nam, "_Excl1"), 
-                  "INT2S", paste("-", stg_nam, "relative pop. size for all", 
-                  nlayers(Lfstg_wtd_excl1_brk), "dates")) 
-      SaveRaster2(Lfstg_wtd_excl2_brk, 
-                  paste0("Misc_output/", stg_nam, "_Excl2"), 
-                  "INT2S", paste("-", stg_nam, "relative pop. size for all", 
-                  nlayers(Lfstg_wtd_excl2_brk), "dates")) 
-      
-      # create and save summary maps of results
-      Lfstg_Excl1_plots <- mclapply(1:nlayers(Lfstg_wtd_excl1_brk), 
-        function(lyr) {
-          lyr_name <- paste0(dats2[[lyr]])
-          PlotMap(Lfstg_wtd_excl1_brk[[lyr]], lyr_name, paste(stg_nam, 
-                 "relative pop. size w/ climate stress exclusion", sep = " "), 
-                 "Relative pop. size", 
-                 paste0("Misc_output/", stg_nam, "_Excl1"))
-      }, mc.cores = 3)
-      
-      Lfstg_Excl2_plots <- mclapply(1:nlayers(Lfstg_wtd_excl2_brk), 
-        function(lyr) {
-          lyr_name <- paste0(dats2[[lyr]])
-          PlotMap(Lfstg_wtd_excl2_brk[[lyr]], lyr_name, paste(stg_nam, 
-                  "relative pop. size w/ climate stress exclusion", sep = " "), 
-                  "Relative pop. size", 
-                  paste0("Misc_output/", stg_nam, "_Excl2"))
-      }, mc.cores = 3)
-    }
-  
-  } 
-  
-  # If the stage is the non-OW form of the OWstage (i.e., Adult = OWadult,
-  # Larvae = OWlarvae), then the output from each of these should be merged.
-  # It doesn't make sense to have an Adult raster/plot that does not also 
-  # include the OW form of that stage. Thus, the OW results (e.g., "OWadult) are
-  # split out the non-OW form (e.g. "Adult") above, but here they are being 
-  # combined. 
-  # Match overwintering stage to actual stage (e.g. OA = A, OE = E, etc.)
-  
-  else if (stg == stg_nonOW) {
-    stg_nonOW <- substring(owstage, 2) # The non-OW stage? (OWadult = adult)
-    stg_nonOW_nam <- mgsub(string = stg_nonOW, pattern = c("E", "L", "P", "A"), 
-                           replacement = c("Egg", "Larvae", "Pupae", "Adult"))
-    
-    # Function to recode results from the OW stage (stg_num = 1) to the same 
-    # value as the non-OW stage, and then calculate the rel. pop. size of the
-    # combined stages (e.g., "Adult" size + "OWadult" size)
-    Wtd_Lfstg_incOW <- mapply(function(x, y) {
-      stg_num <- match(stg_nonOW, stgorder) # Get stage no. of non-OW stage
-      brk <- brick(x)
-      brk[brk == 1] <- stg_num # Replace OW val with nonOW val (OWadult = adult)
-      calc(brk == stg_num, fun = function(z) { round(100 * z) * y })
-    }, x = Lfstg_fls, y = relpopsize)
-    
-    # Sums values of all cohorts (raster brick layers) together; then save 
-    # raster brick, and create and save summary plots
-    Lfstg_incOW_wtd <- Reduce("+", Wtd_Lfstg_incOW) 
-    SaveRaster2(Lfstg_incOW_wtd, paste0("Misc_output/", stg_nonOW_nam), 
-                "INT2U", paste("-", stg_nonOW_nam, "relative pop. size for", 
-                               nlayers(Lfstg_incOW_wtd), "dates"))
-    
-    Lfstg_incOW_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd), 
-      function(lyr) {
-        lyr_name <- paste0(dats2[[lyr]])
-        PlotMap(Lfstg_incOW_wtd[[lyr]], lyr_name, 
-                paste(stg_nonOW_nam, "relative pop. size"), 
-                "Relative pop. size", paste0("Misc_output/", stg_nonOW_nam))
-    }, mc.cores = 2)
-    
-    # If climate stress exclusions are specified, then take substitute values 
-    # where the species is under severe stress with -1 (Excl1), and areas where 
-    # the species is under both moderate and severe stress with -1 and -2, 
-    # respectively (Excl2)
-    if (exclusions_stressunits) {
-      Lfstg_incOW_wtd_excl1 <- Rast_Subs_Excl1(Lfstg_incOW_wtd)
-      Lfstg_incOW_wtd_excl2 <- Rast_Subs_Excl2(Lfstg_incOW_wtd)
-      Lfstg_incOW_wtd_excl1_brk <- do.call(brick, Lfstg_incOW_wtd_excl1)
-      Lfstg_incOW_wtd_excl2_brk <- do.call(brick, Lfstg_incOW_wtd_excl2)
-      SaveRaster2(Lfstg_incOW_wtd_excl1_brk, 
-        paste0("Misc_output/", stg_nonOW_nam, "_Excl1"), "INT2S", 
-        str_wrap(paste("-", stg_nonOW_nam, " relative pop. size w/ sev. climate 
+                             .inorder = TRUE) %dopar% {
+                               #for (stg in stage_list) {
+                               # Get stage number of stage, and then rename to a more descriptive name
+                               stg_num <- match(stg, stgorder)
+                               stg_nam <- mgsub(string = stg, pattern = 
+                                                  c("OE", "OL", "OP", "OA", "E", "L", "P", "A"), 
+                                                replacement = c("OWegg", "OWlarvae", "OWpupae", "OWadult",
+                                                                "Egg", "Larvae", "Pupae", "Adult"))
+                               # Comment
+                               if (stg != stg_nonOW) {
+                                 ### Weight the rasters ###
+                                 # "mapply" (or parallel version = mcmapply) requires two input lists of the 
+                                 # same length, and outputs a list of bricks for each cohort with nlayer = # 
+                                 # of sampling pts. For example, if there are 7 cohorts sampled each month of 
+                                 # yr (12 mon + end of year), then rast_wtd will be a list of 7 cohorts each 
+                                 # w/ 13 layers (13 * 7 = 91 layers). "mcmapply" can be used for increased 
+                                 # speed, but it really overloads memory. 
+                                 
+                                 # For each life stage, extract data from raster brick, and multiple it by 
+                                 # the rel. pop size of each cohort. The result is a list of raster bricks 
+                                 # that provide the relative pop. size of each cohort for each date.
+                                 Lfstg_wtd_list <- mapply(function(x, y) {
+                                   calc((brick(x) == stg_num), 
+                                        fun = function(z) {
+                                          round(100 * z) * y
+                                        })
+                                 }, x = Lfstg_fls, y = relpopsize)
+                                 
+                                 # The results from previous step need to be summed across all cohort. This 
+                                 # produces a single raster brick in which each layer represents the relative 
+                                 # population size of each cohort for each date.
+                                 # "Reduce" accomplishes this task.
+                                 Lfstg_wtd_brk <- Reduce("+", Lfstg_wtd_list) 
+                                 SaveRaster2(Lfstg_wtd_brk, paste0("Misc_output/", stg_nam), "INT2U", 
+                                             paste("-", stg_nam, "relative pop. size for all", 
+                                                   nlayers(Lfstg_wtd_brk), "dates")) 
+                                 
+                                 # Create and save summary maps
+                                 Lfstg_plots <- mclapply(1:nlayers(Lfstg_wtd_brk), function(lyr) {
+                                   lyr_name <- paste0(dats2[[lyr]])
+                                   PlotMap(Lfstg_wtd_brk[[lyr]], lyr_name, 
+                                           paste0(stg_nam, " relative pop. size"), 
+                                           "Relative pop. size", paste0("Misc_output/", stg_nam))
+                                 }, mc.cores = 3)
+                                 
+                                 # If climate stress exclusions are specified, then take weighted lifestage 
+                                 # results from above and substitute values where the species is under severe 
+                                 # stress only with -1 (Excl1), and areas where the species is both moderate 
+                                 # and severe stress with -1 and -2, respectively (Excl2)
+                                 if (exclusions_stressunits) {
+                                   Lfstg_wtd_excl1 <- Rast_Subs_Excl1(Lfstg_wtd_brk)  
+                                   Lfstg_wtd_excl2 <- Rast_Subs_Excl2(Lfstg_wtd_brk)
+                                   
+                                   # Make a raster brick of results and save the brick
+                                   Lfstg_wtd_excl1_brk <- do.call(brick, Lfstg_wtd_excl1)
+                                   Lfstg_wtd_excl2_brk <- do.call(brick, Lfstg_wtd_excl2)
+                                   SaveRaster2(Lfstg_wtd_excl1_brk, 
+                                               paste0("Misc_output/", stg_nam, "_Excl1"), 
+                                               "INT2S", paste("-", stg_nam, "relative pop. size for all", 
+                                                              nlayers(Lfstg_wtd_excl1_brk), "dates")) 
+                                   SaveRaster2(Lfstg_wtd_excl2_brk, 
+                                               paste0("Misc_output/", stg_nam, "_Excl2"), 
+                                               "INT2S", paste("-", stg_nam, "relative pop. size for all", 
+                                                              nlayers(Lfstg_wtd_excl2_brk), "dates")) 
+                                   
+                                   # create and save summary maps of results
+                                   Lfstg_Excl1_plots <- mclapply(1:nlayers(Lfstg_wtd_excl1_brk), 
+                                                                 function(lyr) {
+                                                                   lyr_name <- paste0(dats2[[lyr]])
+                                                                   PlotMap(Lfstg_wtd_excl1_brk[[lyr]], lyr_name, paste(stg_nam, 
+                                                                                                                       "relative pop. size w/ climate stress exclusion", sep = " "), 
+                                                                           "Relative pop. size", 
+                                                                           paste0("Misc_output/", stg_nam, "_Excl1"))
+                                                                 }, mc.cores = 3)
+                                   
+                                   Lfstg_Excl2_plots <- mclapply(1:nlayers(Lfstg_wtd_excl2_brk), 
+                                                                 function(lyr) {
+                                                                   lyr_name <- paste0(dats2[[lyr]])
+                                                                   PlotMap(Lfstg_wtd_excl2_brk[[lyr]], lyr_name, paste(stg_nam, 
+                                                                                                                       "relative pop. size w/ climate stress exclusion", sep = " "), 
+                                                                           "Relative pop. size", 
+                                                                           paste0("Misc_output/", stg_nam, "_Excl2"))
+                                                                 }, mc.cores = 3)
+                                 }
+                                 
+                               } 
+                               
+                               # If the stage is the non-OW form of the OWstage (i.e., Adult = OWadult,
+                               # Larvae = OWlarvae), then the output from each of these should be merged.
+                               # It doesn't make sense to have an Adult raster/plot that does not also 
+                               # include the OW form of that stage. Thus, the OW results (e.g., "OWadult) are
+                               # split out the non-OW form (e.g. "Adult") above, but here they are being 
+                               # combined. 
+                               # Match overwintering stage to actual stage (e.g. OA = A, OE = E, etc.)
+                               
+                               else if (stg == stg_nonOW) {
+                                 stg_nonOW <- substring(owstage, 2) # The non-OW stage? (OWadult = adult)
+                                 stg_nonOW_nam <- mgsub(string = stg_nonOW, pattern = c("E", "L", "P", "A"), 
+                                                        replacement = c("Egg", "Larvae", "Pupae", "Adult"))
+                                 
+                                 # Function to recode results from the OW stage (stg_num = 1) to the same 
+                                 # value as the non-OW stage, and then calculate the rel. pop. size of the
+                                 # combined stages (e.g., "Adult" size + "OWadult" size)
+                                 Wtd_Lfstg_incOW <- mapply(function(x, y) {
+                                   stg_num <- match(stg_nonOW, stgorder) # Get stage no. of non-OW stage
+                                   brk <- brick(x)
+                                   brk[brk == 1] <- stg_num # Replace OW val with nonOW val (OWadult = adult)
+                                   calc(brk == stg_num, fun = function(z) { round(100 * z) * y })
+                                 }, x = Lfstg_fls, y = relpopsize)
+                                 
+                                 # Sums values of all cohorts (raster brick layers) together; then save 
+                                 # raster brick, and create and save summary plots
+                                 Lfstg_incOW_wtd <- Reduce("+", Wtd_Lfstg_incOW) 
+                                 SaveRaster2(Lfstg_incOW_wtd, paste0("Misc_output/", stg_nonOW_nam), 
+                                             "INT2U", paste("-", stg_nonOW_nam, "relative pop. size for", 
+                                                            nlayers(Lfstg_incOW_wtd), "dates"))
+                                 
+                                 Lfstg_incOW_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd), 
+                                                               function(lyr) {
+                                                                 lyr_name <- paste0(dats2[[lyr]])
+                                                                 PlotMap(Lfstg_incOW_wtd[[lyr]], lyr_name, 
+                                                                         paste(stg_nonOW_nam, "relative pop. size"), 
+                                                                         "Relative pop. size", paste0("Misc_output/", stg_nonOW_nam))
+                                                               }, mc.cores = 2)
+                                 
+                                 # If climate stress exclusions are specified, then take substitute values 
+                                 # where the species is under severe stress with -1 (Excl1), and areas where 
+                                 # the species is under both moderate and severe stress with -1 and -2, 
+                                 # respectively (Excl2)
+                                 if (exclusions_stressunits) {
+                                   Lfstg_incOW_wtd_excl1 <- Rast_Subs_Excl1(Lfstg_incOW_wtd)
+                                   Lfstg_incOW_wtd_excl2 <- Rast_Subs_Excl2(Lfstg_incOW_wtd)
+                                   Lfstg_incOW_wtd_excl1_brk <- do.call(brick, Lfstg_incOW_wtd_excl1)
+                                   Lfstg_incOW_wtd_excl2_brk <- do.call(brick, Lfstg_incOW_wtd_excl2)
+                                   SaveRaster2(Lfstg_incOW_wtd_excl1_brk, 
+                                               paste0("Misc_output/", stg_nonOW_nam, "_Excl1"), "INT2S", 
+                                               str_wrap(paste("-", stg_nonOW_nam, " relative pop. size w/ sev. climate 
                        stress exclusion for", 
-                       nlayers(Lfstg_incOW_wtd_excl1_brk), "dates"), 
-                 width = 80))
-      SaveRaster2(Lfstg_incOW_wtd_excl2_brk, 
-        paste0("Misc_output/", stg_nonOW_nam, "_Excl2"), "INT2S",
-        str_wrap(paste("-", stg_nonOW_nam, "relative pop. size w/ sev. and mod. 
+                                                              nlayers(Lfstg_incOW_wtd_excl1_brk), "dates"), 
+                                                        width = 80))
+                                   SaveRaster2(Lfstg_incOW_wtd_excl2_brk, 
+                                               paste0("Misc_output/", stg_nonOW_nam, "_Excl2"), "INT2S",
+                                               str_wrap(paste("-", stg_nonOW_nam, "relative pop. size w/ sev. and mod. 
                        climate stress exclusion for", 
-                       nlayers(Lfstg_incOW_wtd_excl2_brk), "dates"), 
-                 width = 80))
-      
-      # Create and save summary maps of results
-      Lfstg_incOW_Excl1_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd_excl1_brk), 
-        function(lyr) {
-          lyr_name <- paste0(dats2[[lyr]])
-          PlotMap(Lfstg_incOW_wtd_excl1_brk[[lyr]], 
-                  lyr_name, paste(stg_nonOW_nam, 
-                  "relative pop. size w/ climate stress exclusion", sep = " "), 
-                  "Relative pop. size", 
-                  paste0("Misc_output/", stg_nonOW_nam, "_Excl1"))
-      }, mc.cores = 3)
-      
-      Lfstg_incOW_Excl2_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd_excl2_brk), 
-        function(lyr) {
-          lyr_name <- paste0(dats2[[lyr]])
-          PlotMap(Lfstg_incOW_wtd_excl2_brk[[lyr]], lyr_name, 
-                  paste("All", tolower(stg_nonOW_nam), 
-                  "relative pop. size w/ climate stress exclusion", sep = " "), 
-                  "Relative pop. size", paste0("Misc_output/", stg_nonOW_nam, 
-                                               "_Excl2"))
-      }, mc.cores = 3)
-      
-    }
-  }
-}
+                                                              nlayers(Lfstg_incOW_wtd_excl2_brk), "dates"), 
+                                                        width = 80))
+                                   
+                                   # Create and save summary maps of results
+                                   Lfstg_incOW_Excl1_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd_excl1_brk), 
+                                                                       function(lyr) {
+                                                                         lyr_name <- paste0(dats2[[lyr]])
+                                                                         PlotMap(Lfstg_incOW_wtd_excl1_brk[[lyr]], 
+                                                                                 lyr_name, paste(stg_nonOW_nam, 
+                                                                                                 "relative pop. size w/ climate stress exclusion", sep = " "), 
+                                                                                 "Relative pop. size", 
+                                                                                 paste0("Misc_output/", stg_nonOW_nam, "_Excl1"))
+                                                                       }, mc.cores = 3)
+                                   
+                                   Lfstg_incOW_Excl2_plots <- mclapply(1:nlayers(Lfstg_incOW_wtd_excl2_brk), 
+                                                                       function(lyr) {
+                                                                         lyr_name <- paste0(dats2[[lyr]])
+                                                                         PlotMap(Lfstg_incOW_wtd_excl2_brk[[lyr]], lyr_name, 
+                                                                                 paste("All", tolower(stg_nonOW_nam), 
+                                                                                       "relative pop. size w/ climate stress exclusion", sep = " "), 
+                                                                                 "Relative pop. size", paste0("Misc_output/", stg_nonOW_nam, 
+                                                                                                              "_Excl2"))
+                                                                       }, mc.cores = 3)
+                                   
+                                 }
+                               }
+                             }
 
 stopCluster(cl)
 
@@ -1357,9 +1392,9 @@ if (exclusions_stressunits) {
       file = Model_rlogging, append = TRUE) 
   cat("\n", str_wrap("Done with weighted raster outputs and summary maps for 
                        Lifestage, Lifestage_Excl1, and Lifestage_Excl2", 
-                       width = 80), "\n", sep = "")
+                     width = 80), "\n", sep = "")
   cat("\nWEIGHTED RASTER OUTPUT: NUMGEN WITH CLIMATE STRESS EXCL. FOR", 
-       maxgens, " GENS\n", sep = "")
+      maxgens, " GENS\n", sep = "")
 } else {
   cat("\n\n", str_wrap("Done with weighted raster outputs and summary maps for 
                        Lifestage", width = 80), "\n\n", 
@@ -1377,42 +1412,42 @@ RegCluster(ncohort)
 
 NumGen_wtd_byGen <- foreach(gen = as.list(0:maxgens), .packages = pkgs, 
                             .inorder = TRUE) %dopar% {
-#for (gen in as.list(1:maxgens)) {
-  
-  # Weight the raster bricks - i.e. calc. the relative size of pop. in each gen
-  NumGen_wtd <- mapply(function(x, y) { 
-    calc((brick(x) == gen), fun = function(z) { 
-      round(100 * z) * y 
-    })
-  }, x = NumGen_fls, y = relpopsize)
-  
-  # Sum values across all cohorts (raster brick layers)
-  NumGen_wtd <- Reduce("+", NumGen_wtd)
-  SaveRaster2(NumGen_wtd, paste("NumGen", gen, sep = "_"), "INT2U", 
-              paste("- Gen.", gen, "for all", nlayers(NumGen_wtd), "dates"))
-  
-  # If exclusions_stressunits, import the All_Stress_Excl brick to replace 
-  # weighted NumGen raster values in climatically unsuitable areas with 
-  # -2 (Excl2) or -1 (Excl1)
-  if (exclusions_stressunits) {
-    NumGen_wtd_excl1 <- Rast_Subs_Excl1(NumGen_wtd)  
-    NumGen_wtd_excl2 <- Rast_Subs_Excl2(NumGen_wtd)
-    # Make a brick of results and save it
-    NumGen_wtd_excl1_brk <- do.call(brick, NumGen_wtd_excl1)
-    SaveRaster2(NumGen_wtd_excl1_brk, 
-                paste("NumGenExcl1", gen, sep = "_"), "INT2S",
-                str_wrap(paste("- Gen.", gen,
-                "with severe climate stress excl. for all", 
-                               nlayers(NumGen_wtd), "dates"), width = 80))
-    NumGen_wtd_excl2_brk <- do.call(brick, NumGen_wtd_excl2)
-    SaveRaster2(NumGen_wtd_excl2_brk, 
-                paste("NumGenExcl2", gen, sep = "_"), "INT2S",
-                str_wrap(paste("- Gen.", gen,
-                               "with severe and moderate climate stress 
+                              #for (gen in as.list(1:maxgens)) {
+                              
+                              # Weight the raster bricks - i.e. calc. the relative size of pop. in each gen
+                              NumGen_wtd <- mapply(function(x, y) { 
+                                calc((brick(x) == gen), fun = function(z) { 
+                                  round(100 * z) * y 
+                                })
+                              }, x = NumGen_fls, y = relpopsize)
+                              
+                              # Sum values across all cohorts (raster brick layers)
+                              NumGen_wtd <- Reduce("+", NumGen_wtd)
+                              SaveRaster2(NumGen_wtd, paste("NumGen", gen, sep = "_"), "INT2U", 
+                                          paste("- Gen.", gen, "for all", nlayers(NumGen_wtd), "dates"))
+                              
+                              # If exclusions_stressunits, import the All_Stress_Excl brick to replace 
+                              # weighted NumGen raster values in climatically unsuitable areas with 
+                              # -2 (Excl2) or -1 (Excl1)
+                              if (exclusions_stressunits) {
+                                NumGen_wtd_excl1 <- Rast_Subs_Excl1(NumGen_wtd)  
+                                NumGen_wtd_excl2 <- Rast_Subs_Excl2(NumGen_wtd)
+                                # Make a brick of results and save it
+                                NumGen_wtd_excl1_brk <- do.call(brick, NumGen_wtd_excl1)
+                                SaveRaster2(NumGen_wtd_excl1_brk, 
+                                            paste("NumGenExcl1", gen, sep = "_"), "INT2S",
+                                            str_wrap(paste("- Gen.", gen,
+                                                           "with severe climate stress excl. for all", 
+                                                           nlayers(NumGen_wtd), "dates"), width = 80))
+                                NumGen_wtd_excl2_brk <- do.call(brick, NumGen_wtd_excl2)
+                                SaveRaster2(NumGen_wtd_excl2_brk, 
+                                            paste("NumGenExcl2", gen, sep = "_"), "INT2S",
+                                            str_wrap(paste("- Gen.", gen,
+                                                           "with severe and moderate climate stress 
                                excl. for all", nlayers(NumGen_wtd), 
-                               "dates"), width = 80))
-  }
-}
+                                                           "dates"), width = 80))
+                              }
+                            }
 
 stopCluster(cl)
 
@@ -1474,9 +1509,9 @@ NumGen_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk,
                                  grep("NumGen_", names(NumGen_wtd_mrgd_brk)))
 if (exclusions_stressunits) {
   NumGenExcl1_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
-                          grep("NumGenExcl1_", names(NumGen_wtd_mrgd_brk)))
+                                        grep("NumGenExcl1_", names(NumGen_wtd_mrgd_brk)))
   NumGenExcl2_wtd_brk <- raster::subset(NumGen_wtd_mrgd_brk, 
-                          grep("NumGenExcl2_", names(NumGen_wtd_mrgd_brk)))
+                                        grep("NumGenExcl2_", names(NumGen_wtd_mrgd_brk)))
 }
 
 rm(NumGen_wtd_mrgd_brk)
@@ -1492,10 +1527,10 @@ RegCluster(ncohort)
 
 # Make the plots
 #for (brk in NumGen_wtd_plot_list) {
-  NumGen_sum_maps <- foreach(brk = NumGen_wtd_plot_list, .packages = pkgs, 
-                             .inorder = TRUE) %:%
-    foreach(d = dats_list, .packages = pkgs, .inorder = TRUE) %dopar% {
- # for (d in dats_list) {  
+NumGen_sum_maps <- foreach(brk = NumGen_wtd_plot_list, .packages = pkgs, 
+                           .inorder = TRUE) %:%
+  foreach(d = dats_list, .packages = pkgs, .inorder = TRUE) %dopar% {
+    # for (d in dats_list) {  
     nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
     print(nam)
     print(d)
@@ -1510,7 +1545,7 @@ RegCluster(ncohort)
       for (lyr in 1:nlayers(stack_sub)) {
         df <- ConvDF(stack_sub[[lyr]])
         df$gen_num <- as.numeric(str_split_fixed(names(stack_sub[[lyr]]), 
-                                      pattern = "_", 3)[,2])
+                                                 pattern = "_", 3)[,2])
         
         # Replace "Gen1" with "GenOW" if value is 0
         df$gen <- paste(as.character(df$gen_num),"gens.")
@@ -1534,7 +1569,7 @@ RegCluster(ncohort)
       if (all(stack_sub_uniqueVals < 0)) {
         mrgd2 <- df
         mrgd2 <- mutate(mrgd2, gen = ifelse(value == -2, "excl.-severe", 
-                  ifelse(value == -1, "excl.-moderate", value)))
+                                            ifelse(value == -1, "excl.-moderate", value)))
       }
       
       # Merge data frames in the list - if list is empty b/c all data frames 
@@ -1565,19 +1600,19 @@ RegCluster(ncohort)
         # Format data if pops of any gen are present (value > 0) AND there are 
         # climate stress exclusions, but first check that there are any values 
         # in data >= 0 (if all values < 0, data are handled differently above)
-        } else if (any(stack_sub_uniqueVals > 0) & any(mrgd$value < 0)) {
-          if (any(mrgd$value < 0)) {
-            excl_vals <- data.frame(mrgd %>% dplyr::filter(value != 0))
-            #excl_vals$gen <- "GenOW"
-            if (any(df$gen == "0 gens.")) {
-              mrgd2 <- rbind(excl_vals,OW) 
-            } else {
-              mrgd2 <- excl_vals
-            }
+      } else if (any(stack_sub_uniqueVals > 0) & any(mrgd$value < 0)) {
+        if (any(mrgd$value < 0)) {
+          excl_vals <- data.frame(mrgd %>% dplyr::filter(value != 0))
+          #excl_vals$gen <- "GenOW"
+          if (any(df$gen == "0 gens.")) {
+            mrgd2 <- rbind(excl_vals,OW) 
           } else {
-            mrgd2 <- OW
+            mrgd2 <- excl_vals
           }
+        } else {
+          mrgd2 <- OW
         }
+      }
       
       # Change Gen0 to GenOW for plotting purposes
       # mrgd2 <- mutate(mrgd2, gen = ifelse(gen == "Gen0", "GenOW", gen))
@@ -1667,9 +1702,9 @@ if(do_photo){
   RegCluster(ncohort)
   FullGen_wtd_byGen <- foreach(coh = as.list(1:ncohort), 
                                .packages = pkgs, .inorder = TRUE) %dopar% {
-    Mismatch <- 1000 * (brick(AttVolt_fls[coh])/1000 - brick(FullGen_fls[coh]))
-    SaveRaster2(Mismatch, paste0("Mismatch_cohort", coh), "INT2S", "Mismatch")
-  }
+                                 Mismatch <- 1000 * (brick(AttVolt_fls[coh])/1000 - brick(FullGen_fls[coh]))
+                                 SaveRaster2(Mismatch, paste0("Mismatch_cohort", coh), "INT2S", "Mismatch")
+                               }
   stopCluster(cl)
   
   Mismatch_fls <- list.files(pattern = glob2rx("*Mismatch_*.tif$"))
@@ -1681,24 +1716,24 @@ if(do_photo){
   Diap_wtd_fls <- foreach(index = 1:4, 
                           .packages = pkgs, 
                           .inorder = FALSE) %dopar% {
-    fls <- to_weight[[index]]
-    if(index == 1){ # FullGen not multiplied by 1000 like others
-      Ras_weighted <- mapply(function(x,y) { 
-        round(brick(x) * y * 1000)
-      }, x=fls, y=relpopsize)
-    }else{
-      Ras_weighted <- mapply(function(x,y) { 
-        round(brick(x) * y)
-      }, x=fls, y=relpopsize)
-    }
-    Ras_weighted_sum <- Reduce("+", Ras_weighted)
-    SaveRaster2(Ras_weighted_sum, 
-                paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
-                      "all", "weighted", sep="_"), 
-                c("INT2U", "INT2U", "INT2U", "INT2S")[index], " ")
-    return(paste0(paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
-                        "all", "weighted", sep="_"), ".tif"))
-  }
+                            fls <- to_weight[[index]]
+                            if(index == 1){ # FullGen not multiplied by 1000 like others
+                              Ras_weighted <- mapply(function(x,y) { 
+                                round(brick(x) * y * 1000)
+                              }, x=fls, y=relpopsize)
+                            }else{
+                              Ras_weighted <- mapply(function(x,y) { 
+                                round(brick(x) * y)
+                              }, x=fls, y=relpopsize)
+                            }
+                            Ras_weighted_sum <- Reduce("+", Ras_weighted)
+                            SaveRaster2(Ras_weighted_sum, 
+                                        paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
+                                              "all", "weighted", sep="_"), 
+                                        c("INT2U", "INT2U", "INT2U", "INT2S")[index], " ")
+                            return(paste0(paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
+                                                "all", "weighted", sep="_"), ".tif"))
+                          }
   stopCluster(cl)
   
   
@@ -1726,117 +1761,117 @@ if(do_photo){
   RegCluster(ncohort)
   Diap_sum_maps <- foreach(index = 1:nlayers(Diap_wtd_mrgd_brk), 
                            .packages = pkgs, .inorder = TRUE) %dopar%{
-    brk <- Diap_wtd_mrgd_brk[[index]] 
-    nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
-    print(nam)
-    dat <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,2])
-    print(dat)
-    brk <- brk + template # adding template ensures NA's are NA's instead of 0
-    df <- ConvDF(brk)
-    if(all(df$value == 0)){
-      nam <- "skip"
-    }  #probably not interesting to plot
-    
-    sp <- paste0(fullname,":")
-    nicedat <- as.character(format(strptime(dat,format="%Y%m%d"), 
-                                   format="%m/%d/%Y"))
-    titl <- case_when(nam == "AttVolt" ~ "Attempted voltinism",
-                      nam == "FullGen" ~ "Potential voltinism",
-                      nam == "Diapause" ~ "Chose to diapause",
-                      nam == "Mismatch" ~ "Voltinism Mismatch")
-    titl <- paste(titl, nicedat, sep=" ")
-    subtitl <- paste("Maps and modeling",format(Sys.Date(),"%m/%d/%Y"),
-                     "by Oregon State University IPPC USPEST.ORG for SERDP; 
+                             brk <- Diap_wtd_mrgd_brk[[index]] 
+                             nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
+                             print(nam)
+                             dat <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,2])
+                             print(dat)
+                             brk <- brk + template # adding template ensures NA's are NA's instead of 0
+                             df <- ConvDF(brk)
+                             if(all(df$value == 0)){
+                               nam <- "skip"
+                             }  #probably not interesting to plot
+                             
+                             sp <- paste0(fullname,":")
+                             nicedat <- as.character(format(strptime(dat,format="%Y%m%d"), 
+                                                            format="%m/%d/%Y"))
+                             titl <- case_when(nam == "AttVolt" ~ "Attempted voltinism",
+                                               nam == "FullGen" ~ "Potential voltinism",
+                                               nam == "Diapause" ~ "Chose to diapause",
+                                               nam == "Mismatch" ~ "Voltinism Mismatch")
+                             titl <- paste(titl, nicedat, sep=" ")
+                             subtitl <- paste("Maps and modeling",format(Sys.Date(),"%m/%d/%Y"),
+                                              "by Oregon State University IPPC USPEST.ORG for SERDP; 
                      climate data from OSU PRISM Climate Group")
-    
-    
-    if(nam %in% c("AttVolt", "FullGen")){
-      # too many generations is overwhelming on map 
-      # TODO: add maxgen+ as highest discrete generation value
-      
-      plotmax <- max(df$value / 1000)
-      
-      if (plotmax <= 3){
-        df$value <- as.factor(round(df$value / 1000 / .25) * .25)
-      }
-      if (plotmax > 3 & plotmax < 5){
-        df$value <- as.factor(round(df$value / 1000 / .5) * .5)
-      }
-      if (plotmax >= 5){
-        df$value[df$value >= 5000] <- 5000
-        df$value <- as.factor(round(df$value / 1000 / .5) * .5)
-        levels(df$value)[length(levels(df$value))] <- 
-          paste0(levels(df$value)[length(levels(df$value))], " or more")
-        plotmax <- 5
-      }
-      
-      # # Auto binning, even classes but nonintuitive breaks
-      # df$value <- round(df$value / 1000 / .5) * .5
-      # df2 <- Cut_bins(df, 10)
-      
-      sites <- data.frame(ID = c(
-        "Vantage, WA", 
-        "Sutherlin, OR", "Bellingham, WA",
-        "McArthur, CA", "Palermo, CA", "Rickreall, OR"),
-        x = c(-120.461073,
-              -123.315854, -122.479482,
-              -121.41, -121.58, -123.27),
-        y = c(46.680138,
-              43.387721, 48.756105,
-              41.10, 39.41, 44.98))
-      
-      p <- Base_map(df) + 
-        scale_fill_viridis(discrete = TRUE, name = "Generations", 
-                           begin = 0, end = plotmax/5) +
-        geom_point(data = sites, aes(x = x, y = y), color = "black", size = 3) +
-        labs(title = str_wrap(paste(sp,titl), width = 55), 
-             subtitle = str_wrap(subtitl, width = 75)) +
-        theme_map(base_size = base_size) + mytheme
-      ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
-             units = c('in'), dpi = 300) 
-    } 
-    
-    if(nam == "Diapause"){
-      # TODO Diapause map doesn't match lost generations because of pre-diap?
-      df$value <- df$value / 10 # Percent
-      
-      p <- Base_map_na(df) + 
-        scale_fill_viridis(discrete = FALSE, name = "% in Diapause", 
-                           begin = 0, end = 1) +
-        labs(title = str_wrap(paste(sp,titl), width = 55), 
-             subtitle = str_wrap(subtitl, width = 75)) +
-        theme_map(base_size = base_size) + mytheme
-      ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
-             units = c('in'), dpi = 300) 
-    } 
-    
-    if(nam == "Mismatch"){
-      minmm <- round(min(df$value/1000), 1) - .1
-      df$value <- df$value / 1000
-      if(minmm < -4){
-        mmbrk <- c(minmm, -4, -3, -2, -1, 0, .25, .5, .75, 1)
-        df$value <- cut(df$value, mmbrk)
-        cols <- setNames(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
-                           "#c7eae5", "#80cdc1", "#35978f", "#01665e"), 
-                         levels(df$value))
-      }else{
-        mmbrk <- c(-4, -3, -2, -1, 0, .25, .5, .75, 1)
-        df$value <- cut(df$value, mmbrk)
-        cols <- setNames(c("#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
-                           "#c7eae5", "#80cdc1", "#35978f", "#01665e"), 
-                         levels(df$value))
-      }
-      
-      p <- Base_map_na(df) + 
-        geom_point(data = sites, aes(x = x, y = y), color = "black", size = 3) +
-        scale_fill_manual(values = cols, name = "Mismatch") +
-        labs(title = str_wrap(paste(sp,titl), width = 55), 
-             subtitle = str_wrap(subtitl, width = 75)) +
-        theme_map(base_size = base_size) + mytheme
-      ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
-             units = c('in'), dpi = 300) 
-    } 
-  }
+                             
+                             
+                             if(nam %in% c("AttVolt", "FullGen")){
+                               # too many generations is overwhelming on map 
+                               # TODO: add maxgen+ as highest discrete generation value
+                               
+                               plotmax <- max(df$value / 1000)
+                               
+                               if (plotmax <= 3){
+                                 df$value <- as.factor(round(df$value / 1000 / .25) * .25)
+                               }
+                               if (plotmax > 3 & plotmax < 5){
+                                 df$value <- as.factor(round(df$value / 1000 / .5) * .5)
+                               }
+                               if (plotmax >= 5){
+                                 df$value[df$value >= 5000] <- 5000
+                                 df$value <- as.factor(round(df$value / 1000 / .5) * .5)
+                                 levels(df$value)[length(levels(df$value))] <- 
+                                   paste0(levels(df$value)[length(levels(df$value))], " or more")
+                                 plotmax <- 5
+                               }
+                               
+                               # # Auto binning, even classes but nonintuitive breaks
+                               # df$value <- round(df$value / 1000 / .5) * .5
+                               # df2 <- Cut_bins(df, 10)
+                               
+                               # sites <- data.frame(ID = c(
+                               #   "Vantage, WA", 
+                               #   "Sutherlin, OR", "Bellingham, WA",
+                               #   "McArthur, CA", "Palermo, CA", "Rickreall, OR"),
+                               #   x = c(-120.461073,
+                               #         -123.315854, -122.479482,
+                               #         -121.41, -121.58, -123.27),
+                               #   y = c(46.680138,
+                               #         43.387721, 48.756105,
+                               #         41.10, 39.41, 44.98))
+                               
+                               p <- Base_map(df) + 
+                                 scale_fill_viridis(discrete = TRUE, name = "Generations", 
+                                                    begin = 0, end = plotmax/5) +
+                                 # geom_point(data = sites, aes(x = x, y = y), color = "black", size = 3) +
+                                 labs(title = str_wrap(paste(sp,titl), width = 55), 
+                                      subtitle = str_wrap(subtitl, width = 75)) +
+                                 theme_map(base_size = base_size) + mytheme
+                               ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
+                                      units = c('in'), dpi = 300) 
+                             } 
+                             
+                             if(nam == "Diapause"){
+                               # TODO Diapause map doesn't match lost generations because of pre-diap?
+                               df$value <- df$value / 10 # Percent
+                               
+                               p <- Base_map_na(df) + 
+                                 scale_fill_viridis(discrete = FALSE, name = "% in Diapause", 
+                                                    begin = 0, end = 1) +
+                                 labs(title = str_wrap(paste(sp,titl), width = 55), 
+                                      subtitle = str_wrap(subtitl, width = 75)) +
+                                 theme_map(base_size = base_size) + mytheme
+                               ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
+                                      units = c('in'), dpi = 300) 
+                             } 
+                             
+                             if(nam == "Mismatch"){
+                               minmm <- round(min(df$value/1000), 1) - .1
+                               df$value <- df$value / 1000
+                               if(minmm < -4){
+                                 mmbrk <- c(minmm, -4, -3, -2, -1, 0, .25, .5, .75, 1)
+                                 df$value <- cut(df$value, mmbrk)
+                                 cols <- setNames(c("#8c510a", "#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
+                                                    "#c7eae5", "#80cdc1", "#35978f", "#01665e"), 
+                                                  levels(df$value))
+                               }else{
+                                 mmbrk <- c(-4, -3, -2, -1, 0, .25, .5, .75, 1)
+                                 df$value <- cut(df$value, mmbrk)
+                                 cols <- setNames(c("#bf812d", "#dfc27d", "#f6e8c3", "#f5f5f5", 
+                                                    "#c7eae5", "#80cdc1", "#35978f", "#01665e"), 
+                                                  levels(df$value))
+                               }
+                               
+                               p <- Base_map_na(df) + 
+                                 # geom_point(data = sites, aes(x = x, y = y), color = "black", size = 3) +
+                                 scale_fill_manual(values = cols, name = "Mismatch") +
+                                 labs(title = str_wrap(paste(sp,titl), width = 55), 
+                                      subtitle = str_wrap(subtitl, width = 75)) +
+                                 theme_map(base_size = base_size) + mytheme
+                               ggsave(p,file=paste0(nam,"_", dat, ".png"), height = asp * 7, 
+                                      units = c('in'), dpi = 300) 
+                             } 
+                           }
   stopCluster(cl)
 } # close do_photo
 
