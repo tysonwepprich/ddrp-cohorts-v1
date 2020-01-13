@@ -12,7 +12,7 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "tidyr", "tictoc", "tools", "viridis")
 
 # change this to switch paths to Tyson's Hopper/Grub values
-server <- "hopper" # "grub"
+server <- "hopper"
 
 # Library path
 if(server == "hopper"){
@@ -151,20 +151,20 @@ if (!is.na(opts[1])) {
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
-  region_param  <- "NORTHWEST" # Default REGION to use
+  region_param  <- "AR" # Default REGION to use
   exclusions_stressunits    <- 0 # Turn on/off climate stress unit exclusions
   pems          <- 0 # Turn on/off pest event maps
   mapA          <- 1 # Make maps for adult stage
   mapE          <- 1 # Make maps for egg stage
   mapL          <- 1 # Make maps for larval stage
   mapP          <- 1 # Make maps for pupal stage
-  out_dir       <- "GCA_2018" # Output dir
+  out_dir       <- "GCA_test" # Output dir
   out_option    <- 1 # Output option category
-  ncohort       <- 7 # Number of cohorts to approximate end of OW stage
+  ncohort       <- 5 # Number of cohorts to approximate end of OW stage
   odd_gen_map   <- 0 # Create summary plots for odd gens only (gen1, gen3, ..)
   do_photo      <- 1 # Use photoperiod diapause modules in daily loop and results
-  cp_mean       <- 15.5 # Critical photoperiod mean
-  cp_sd         <- .5 # Standard deviation around cp_mean
+  cp_mean       <- 14.5 # Critical photoperiod mean
+  cp_sd         <- .2 # Standard deviation around cp_mean
 }
 
 # (2). DIRECTORY INIT ------
@@ -1712,10 +1712,11 @@ if(do_photo){
   
   # Weight diapause stuff
   to_weight <- list(FullGen_fls, AttVolt_fls, Diapause_fls, Mismatch_fls)
-  RegCluster(4)
+  # RegCluster(4)
   Diap_wtd_fls <- foreach(index = 1:4, 
                           .packages = pkgs, 
-                          .inorder = FALSE) %dopar% {
+                          .inorder = FALSE) %do% {
+                            print(index)
                             fls <- to_weight[[index]]
                             if(index == 1){ # FullGen not multiplied by 1000 like others
                               Ras_weighted <- mapply(function(x,y) { 
@@ -1734,7 +1735,7 @@ if(do_photo){
                             return(paste0(paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
                                                 "all", "weighted", sep="_"), ".tif"))
                           }
-  stopCluster(cl)
+  # stopCluster(cl)
   
   
   ### * Create summary maps of Diapause results, weighted across cohorts
@@ -1758,9 +1759,10 @@ if(do_photo){
     Diap_wtd_mrgd_brk <- addLayer(Diap_wtd_mrgd_brk, Diap_wtd_brk)
   }
   
-  RegCluster(ncohort)
+  # RegCluster(ncohort)
   Diap_sum_maps <- foreach(index = 1:nlayers(Diap_wtd_mrgd_brk), 
-                           .packages = pkgs, .inorder = TRUE) %dopar%{
+                           .packages = pkgs, .inorder = TRUE) %do%{
+                             print(index)
                              brk <- Diap_wtd_mrgd_brk[[index]] 
                              nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
                              print(nam)
@@ -1872,7 +1874,7 @@ if(do_photo){
                                       units = c('in'), dpi = 300) 
                              } 
                            }
-  stopCluster(cl)
+  # stopCluster(cl)
 } # close do_photo
 
 # 
