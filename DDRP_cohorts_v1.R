@@ -1837,7 +1837,7 @@ if(do_photo){
                                # TODO Diapause map doesn't match lost generations because of pre-diap?
                                df$value <- df$value / 10 # Percent
                                
-                               p <- Base_map_na(df) + 
+                               p <- Base_map(df) + 
                                  scale_fill_viridis(discrete = FALSE, name = "% in Diapause", 
                                                     begin = 0, end = 1) +
                                  labs(title = str_wrap(paste(sp,titl), width = 55), 
@@ -1864,7 +1864,7 @@ if(do_photo){
                                                   levels(df$value))
                                }
                                
-                               p <- Base_map_na(df) + 
+                               p <- Base_map(df) + 
                                  # geom_point(data = sites, aes(x = x, y = y), color = "black", size = 3) +
                                  scale_fill_manual(values = cols, name = "Mismatch") +
                                  labs(title = str_wrap(paste(sp,titl), width = 55), 
