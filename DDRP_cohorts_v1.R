@@ -178,21 +178,26 @@ if(server == "hopper"){
   params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/" # tyson's HOPPER
 }
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
+if(start_year > 2020) forecast_data <- "MACA"
+if(region_param == "CONUSPLUS") forecast_data <- "DAYMET"
 
 if(forecast_data == "PRISM"){
   base_dir <- "/data/PRISM/"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 "
 }
 
 if(forecast_data == "DAYMET"){
   # North America Daymet data
   base_dir <- "/home/tyson/REPO/photovoltinism/daymet/"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0" 
 }
 
 if(forecast_data == "MACA"){
   base_dir <- "/home/macav2metdata"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +pm=0 +a=6378137 +rf=298.257223563" 
 }
 
 
@@ -501,28 +506,49 @@ cat("\nDone writing metafile\n\n", forecast_data, " DATA PROCESSING\n",
 # Weather inputs and outputs - PRISM climate data w/subdirs 4-digit year
 # New feature - choose whether to use PRISM or NMME for weather forecasts 
 # (forecast_data = PRISM, or forecast_data = NMME)
-# tminfiles <- list.files(path = prism_dir, 
-#                         pattern = glob2rx(paste0("*DAYMET_tmin_*", 
-#                                                  start_year, "*.grd$*")), 
-#                         all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tminfiles <- list.files(path = prism_dir,
-                        pattern = glob2rx(paste0("*PRISM_tmin_*",
-                                                 start_year, "*.bil$*")),
-                        all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tminfiles <- ExtractBestPRISM(tminfiles, forecast_data, 
-                              keep_leap)[start_doy:end_doy]
+if(forecast_data == "PRISM"){
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*PRISM_tmin_*",
+                                                   start_year, "*.bil$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  tminfiles <- ExtractBestPRISM(tminfiles, forecast_data, 
+                                keep_leap)[start_doy:end_doy]
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*PRISM_tmax_*",
+                                                   start_year, "*.bil$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  tmaxfiles <- ExtractBestPRISM(tmaxfiles, forecast_data, 
+                                keep_leap) [start_doy:end_doy]
+}
 
-# tmaxfiles <- list.files(path = prism_dir, 
-#                         pattern = glob2rx(paste0("*DAYMET_tmax_*",
-#                                                  start_year, "*.grd$*")), 
-#                         all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tmaxfiles <- list.files(path = prism_dir,
-                        pattern = glob2rx(paste0("*PRISM_tmax_*",
-                                                 start_year, "*.bil$*")),
-                        all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tmaxfiles <- ExtractBestPRISM(tmaxfiles, forecast_data, 
-                              keep_leap) [start_doy:end_doy]
 
+
+if(forecast_data == "MACA"){
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*MACA_tmin_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*MACA_tmax_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)  
+}
+
+if(forecast_data == "DAYMET"){
+  
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*DAYMET_tmin_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*DAYMET_tmax_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  
+}
 ## Extract date from temperature files using regex pattern matching
 dats <- regmatches(tminfiles, regexpr(pattern = "[0-9]{8}", text = tminfiles))
 
