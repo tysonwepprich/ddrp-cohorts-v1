@@ -195,7 +195,7 @@ if(forecast_data == "DAYMET"){
 }
 
 if(forecast_data == "MACA"){
-  base_dir <- "/home/macav2metdata/"
+  base_dir <- "/home/macav2metdata/GFDL-ESM2M/"
   prism_dir <- paste0(base_dir, start_year)
   raster_crs <- "+proj=longlat +pm=0 +a=6378137 +rf=298.257223563" 
 }
