@@ -151,7 +151,7 @@ if (!is.na(opts[1])) {
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
-  region_param  <- "AR" # Default REGION to use
+  region_param  <- "OR" # Default REGION to use
   exclusions_stressunits    <- 0 # Turn on/off climate stress unit exclusions
   pems          <- 0 # Turn on/off pest event maps
   mapA          <- 1 # Make maps for adult stage
@@ -195,13 +195,11 @@ if(forecast_data == "DAYMET"){
 }
 
 if(forecast_data == "MACA"){
-  base_dir <- "/home/macav2metdata"
+  base_dir <- "/home/macav2metdata/"
   prism_dir <- paste0(base_dir, start_year)
   raster_crs <- "+proj=longlat +pm=0 +a=6378137 +rf=298.257223563" 
 }
 
-
-# # CONUS MACAv2 forecasts
 
 cat("\nBASE DIR: ", base_dir, "\n")
 cat("\nWORKING DIR: ", prism_dir, "\n")
@@ -526,12 +524,12 @@ if(forecast_data == "PRISM"){
 
 if(forecast_data == "MACA"){
   tminfiles <- list.files(path = prism_dir,
-                          pattern = glob2rx(paste0("*MACA_tmin_*",
+                          pattern = glob2rx(paste0("*MACAV2_tmin_*",
                                                    start_year, "*.grd$*")),
                           all.files = FALSE, full.names = TRUE, recursive = TRUE)
   
   tmaxfiles <- list.files(path = prism_dir,
-                          pattern = glob2rx(paste0("*MACA_tmax_*",
+                          pattern = glob2rx(paste0("*MACAV2_tmax_*",
                                                    start_year, "*.grd$*")),
                           all.files = FALSE, full.names = TRUE, recursive = TRUE)  
 }
