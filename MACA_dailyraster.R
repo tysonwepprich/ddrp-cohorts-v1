@@ -47,7 +47,7 @@ SplitMACA <- function(macafile, targetdir, ncores = 10){
   # loop every day and write new daily rasters
   # shift longitude values and Kelvin temperature scale for MACA to match other raster data
   foreach(d = indices, .packages = c('raster', "ncdf4", "stringr")) %dopar% {
-    dras <- shift(ras[[d]], dx = -360) - 273.15
+    dras <- raster::shift(ras[[d]], x = -360) - 273.15
     date <- gsub(pattern = "[^0-9]", replacement = "", x = names(dras))
     yr <- substr(date, start = 1, stop = 4)
     newname <- paste0("MACAV2_", varname, "_", date, ".grd")
@@ -63,4 +63,21 @@ SplitMACA <- function(macafile, targetdir, ncores = 10){
 # t <- system.time({
 # SplitMACA(macafile, "/home/macav2metdata")
 # })
+
+# function just corrects longitude if rasters wrong
+ShiftMACA <- function(macafiles,  ncores = 10){
+  cl <<- makePSOCKcluster(ncores) # export to global environment
+  # If run is being done on Hopper, need to specify the library for each worker
+  if (Sys.info()["nodename"] == "hopper.science.oregonstate.edu") {
+    clusterEvalQ(cl, .libPaths("/usr/local/lib64/R/library/"))
+  }
+  registerDoParallel(cl)
+  # loop every day and write new daily rasters
+  # shift longitude values and Kelvin temperature scale for MACA to match other raster data
+  foreach(mf = macafiles, .packages = c('raster', "stringr")) %dopar% {
+    ras <- raster::shift(raster(mf), x = -360)
+    writeRaster(x = ras, filename = mf, format = "raster", overwrite = TRUE)
+  }
+  stopCluster(cl)
+}
 
