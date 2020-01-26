@@ -1054,7 +1054,7 @@ ExtractBestPRISM <- function(files, forecast_data, keep_leap) {
 Mat_to_rast <- function(m, ext, template) {
   rast <- raster(m, xmn = ext[1,1], xmx = ext[1,2], 
                     ymn = ext[2,1], ymx = ext[2,2])
-  crs(rast) <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0"
+  crs(rast) <- crs(template)
   res(rast) <- res(template)
   NAvalue(rast) <- NaN
   return(rast)

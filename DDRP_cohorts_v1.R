@@ -12,7 +12,7 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "tidyr", "tictoc", "tools", "viridis")
 
 # change this to switch paths to Tyson's Hopper/Grub values
-server <- "hopper"
+server <- "grub"
 
 # Library path
 if(server == "hopper"){
@@ -598,7 +598,8 @@ REGION <- Assign_extent(region_param) # Bounding box
 template <- crop(raster(tminfiles[1]), REGION) # Template for cropping
 template[!is.na(template)] <- 0
 dataType(template) <- "INT2U"
-crs <- crs("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0, 0, 0")
+# crs <- crs("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0, 0, 0")
+crs <- crs(raster_crs)
 crs(template) <- crs
 
 #### * If CONUS or EAST, split template into tiles (and run in parallel)

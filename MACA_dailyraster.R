@@ -64,20 +64,22 @@ SplitMACA <- function(macafile, targetdir, ncores = 10){
 # SplitMACA(macafile, "/home/macav2metdata")
 # })
 
-# function just corrects longitude if rasters wrong
-ShiftMACA <- function(macafiles,  ncores = 10){
-  cl <<- makePSOCKcluster(ncores) # export to global environment
-  # If run is being done on Hopper, need to specify the library for each worker
-  if (Sys.info()["nodename"] == "hopper.science.oregonstate.edu") {
-    clusterEvalQ(cl, .libPaths("/usr/local/lib64/R/library/"))
-  }
-  registerDoParallel(cl)
-  # loop every day and write new daily rasters
-  # shift longitude values and Kelvin temperature scale for MACA to match other raster data
-  foreach(mf = macafiles, .packages = c('raster', "stringr")) %dopar% {
-    ras <- raster::shift(raster(mf), x = -360)
-    writeRaster(x = ras, filename = mf, format = "raster", overwrite = TRUE)
-  }
-  stopCluster(cl)
-}
+# macafiles <- list.files(path = "/home/macav2metdata/GFDL-ESM2M", pattern = ".grd", full.names = TRUE, recursive = TRUE)
+# 
+# # function just corrects longitude if rasters wrong
+# ShiftMACA <- function(macafiles,  ncores = 10){
+#   cl <<- makePSOCKcluster(ncores) # export to global environment
+#   # If run is being done on Hopper, need to specify the library for each worker
+#   if (Sys.info()["nodename"] == "hopper.science.oregonstate.edu") {
+#     clusterEvalQ(cl, .libPaths("/usr/local/lib64/R/library/"))
+#   }
+#   registerDoParallel(cl)
+#   # loop every day and write new daily rasters
+#   # shift longitude values and Kelvin temperature scale for MACA to match other raster data
+#   foreach(mf = macafiles, .packages = c('raster', "stringr")) %dopar% {
+#     ras <- raster::shift(raster(mf), x = -360)
+#     writeRaster(x = ras, filename = mf, format = "raster", overwrite = TRUE)
+#   }
+#   stopCluster(cl)
+# }
 
