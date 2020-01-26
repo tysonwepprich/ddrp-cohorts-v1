@@ -12,7 +12,7 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "tidyr", "tictoc", "tools", "viridis")
 
 # change this to switch paths to Tyson's Hopper/Grub values
-server <- "grub"
+server <- "hopper"
 
 # Library path
 if(server == "hopper"){
@@ -147,7 +147,7 @@ if (!is.na(opts[1])) {
   #### * Default values for params, if not provided in command line ####
   spp           <- "GCA" # Default species to use
   forecast_data <- "PRISM" # Forecast data to use (PRISM or NMME)
-  start_year    <- 2018 # Year to use
+  start_year    <- 2025 # Year to use
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
