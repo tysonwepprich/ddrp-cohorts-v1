@@ -180,6 +180,7 @@ if(server == "hopper"){
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
 if(start_year > 2020) forecast_data <- "MACA"
 if(region_param == "CONUSPLUS") forecast_data <- "DAYMET"
+if(end_doy == 366) end_doy <- 365 # Len's hopper "datetoday" function gives 366 even in non-leap years
 
 if(forecast_data == "PRISM"){
   base_dir <- "/data/PRISM/"
