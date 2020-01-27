@@ -147,7 +147,7 @@ if (!is.na(opts[1])) {
   #### * Default values for params, if not provided in command line ####
   spp           <- "GCA" # Default species to use
   forecast_data <- "PRISM" # Forecast data to use (PRISM or NMME)
-  start_year    <- 2025 # Year to use
+  start_year    <- 2023 # Year to use
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
@@ -526,12 +526,12 @@ if(forecast_data == "MACA"){
   tminfiles <- list.files(path = prism_dir,
                           pattern = glob2rx(paste0("*MACAV2_tmin_*",
                                                    start_year, "*.grd$*")),
-                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
   
   tmaxfiles <- list.files(path = prism_dir,
                           pattern = glob2rx(paste0("*MACAV2_tmax_*",
                                                    start_year, "*.grd$*")),
-                          all.files = FALSE, full.names = TRUE, recursive = TRUE)  
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
 }
 
 if(forecast_data == "DAYMET"){
@@ -539,12 +539,12 @@ if(forecast_data == "DAYMET"){
   tminfiles <- list.files(path = prism_dir,
                           pattern = glob2rx(paste0("*DAYMET_tmin_*",
                                                    start_year, "*.grd$*")),
-                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
   
   tmaxfiles <- list.files(path = prism_dir,
                           pattern = glob2rx(paste0("*DAYMET_tmax_*",
                                                    start_year, "*.grd$*")),
-                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
   
 }
 ## Extract date from temperature files using regex pattern matching
@@ -1737,11 +1737,10 @@ if(do_photo){
   
   # Weight diapause stuff
   to_weight <- list(FullGen_fls, AttVolt_fls, Diapause_fls, Mismatch_fls)
-  # RegCluster(4)
+  RegCluster(4)
   Diap_wtd_fls <- foreach(index = 1:4, 
                           .packages = pkgs, 
                           .inorder = FALSE) %do% {
-                            print(index)
                             fls <- to_weight[[index]]
                             if(index == 1){ # FullGen not multiplied by 1000 like others
                               Ras_weighted <- mapply(function(x,y) { 
@@ -1760,7 +1759,7 @@ if(do_photo){
                             return(paste0(paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
                                                 "all", "weighted", sep="_"), ".tif"))
                           }
-  # stopCluster(cl)
+  stopCluster(cl)
   
   
   ### * Create summary maps of Diapause results, weighted across cohorts
@@ -1787,12 +1786,12 @@ if(do_photo){
   # RegCluster(ncohort)
   Diap_sum_maps <- foreach(index = 1:nlayers(Diap_wtd_mrgd_brk), 
                            .packages = pkgs, .inorder = TRUE) %do%{
-                             print(index)
+                             # print(index)
                              brk <- Diap_wtd_mrgd_brk[[index]] 
                              nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
-                             print(nam)
+                             # print(nam)
                              dat <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,2])
-                             print(dat)
+                             # print(dat)
                              brk <- brk + template # adding template ensures NA's are NA's instead of 0
                              df <- ConvDF(brk)
                              if(all(df$value == 0)){
@@ -1831,21 +1830,6 @@ if(do_photo){
                                    paste0(levels(df$value)[length(levels(df$value))], " or more")
                                  plotmax <- 5
                                }
-                               
-                               # # Auto binning, even classes but nonintuitive breaks
-                               # df$value <- round(df$value / 1000 / .5) * .5
-                               # df2 <- Cut_bins(df, 10)
-                               
-                               # sites <- data.frame(ID = c(
-                               #   "Vantage, WA", 
-                               #   "Sutherlin, OR", "Bellingham, WA",
-                               #   "McArthur, CA", "Palermo, CA", "Rickreall, OR"),
-                               #   x = c(-120.461073,
-                               #         -123.315854, -122.479482,
-                               #         -121.41, -121.58, -123.27),
-                               #   y = c(46.680138,
-                               #         43.387721, 48.756105,
-                               #         41.10, 39.41, 44.98))
                                
                                p <- Base_map(df) + 
                                  scale_fill_viridis(discrete = TRUE, name = "Generations", 

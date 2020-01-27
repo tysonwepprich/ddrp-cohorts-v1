@@ -1034,15 +1034,15 @@ ExtractBestPRISM <- function(files, forecast_data, keep_leap) {
   fileorder <- order(regmatches(best, dates))
   files <- best[fileorder]
   
-  # Remove leap day (2/29) if the start_year is not a leap year, or if it is 
-  # a leap year but user wants it removed (keep_leap == 0). This doesn't apply 
+  # Remove leap day (2/29) if the start_year is not a leap year, or if it is
+  # a leap year but user wants it removed (keep_leap == 0). This doesn't apply
   # if 30 yr average data or other non-specific year data are being used
   # (in this case, start_year is non-numeric)
-  # if (is.numeric(start_year)) {
-  #   if (start_year %% 4 != 0 | start_year %% 4 == 0 & keep_leap == 0) {
-  #     files <- files[!grepl(paste0(start_year, "0229"), files)]
-  #   }
-  # }
+  if (is.numeric(start_year)) {
+    if (start_year %% 4 != 0 | start_year %% 4 == 0 & keep_leap == 0) {
+      files <- files[!grepl(paste0(start_year, "0229"), files)]
+    }
+  }
   
   return(files)
 }
