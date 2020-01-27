@@ -292,32 +292,32 @@ if (!grepl("[A-z]", start_year)) {
   start_year <- as.numeric(start_year)
 }
 
-# Set up start and stop day of year depending on whether it's a leap year or
-# not (need to modify the last day of the year if the year is a leap year 
-# and user wants to include it)
-# This does not apply to 30 yr climate data, which would not have a numeric
-# start year
-if (is.numeric(start_year)) {
-  
-  if (start_year %% 4 == 0 & keep_leap == 1) {
-    cat(str_wrap(paste0(start_year, " is a leap year and leap day (2/29) will be 
-                 included in the model"), width = 80), "\n", 
-        file = Model_rlogging, append = TRUE)
-    
-    # Need to add an extra day onto year if all 365 days are being included
-    if (end_doy == 365) {
-      end_doy <- 366
-    }
-    
-  } else if (start_year %% 4 == 0 & keep_leap == 0) {
-    cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
-                        not be included in the model"), width = 80), "\n", 
-        file = Model_rlogging, append = TRUE)
-  } else if (start_year %% 4 != 0) {
-    cat(start_year, "is not a leap year - ignoring 'keep_leap' parameter\n", 
-        file = Model_rlogging, append = TRUE)
-  }
-}
+# # Set up start and stop day of year depending on whether it's a leap year or
+# # not (need to modify the last day of the year if the year is a leap year 
+# # and user wants to include it)
+# # This does not apply to 30 yr climate data, which would not have a numeric
+# # start year
+# if (is.numeric(start_year)) {
+#   
+#   if (start_year %% 4 == 0 & keep_leap == 1) {
+#     cat(str_wrap(paste0(start_year, " is a leap year and leap day (2/29) will be 
+#                  included in the model"), width = 80), "\n", 
+#         file = Model_rlogging, append = TRUE)
+#     
+#     # Need to add an extra day onto year if all 365 days are being included
+#     if (end_doy == 365) {
+#       end_doy <- 366
+#     }
+#     
+#   } else if (start_year %% 4 == 0 & keep_leap == 0) {
+#     cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
+#                         not be included in the model"), width = 80), "\n", 
+#         file = Model_rlogging, append = TRUE)
+#   } else if (start_year %% 4 != 0) {
+#     cat(start_year, "is not a leap year - ignoring 'keep_leap' parameter\n", 
+#         file = Model_rlogging, append = TRUE)
+#   }
+# }
 
 # Create a list of days to use for daily loop
 sublist <- start_doy:end_doy
