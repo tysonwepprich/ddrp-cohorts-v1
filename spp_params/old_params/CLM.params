@@ -1,0 +1,41 @@
+# these are params and values for SPP=
+#  CLM, codling moth
+  fullname   <- "Codling Moth (combined model several sources)"
+  pestof     <- "Pome fruits: apple, pear, quince, etc."
+  stgorder   <- c("OL","P","A","E","L","F")
+  owstage    <- "OL"
+  eggLDT     <- 10
+  eggUDT     <- 31.1 #
+  larvaeLDT  <- 10
+  larvaeUDT  <- 31.1 # upper dev. threshold-need to verify
+  pupaeLDT   <- 10
+  pupaeUDT   <- 31.1
+  adultLDT   <- 10   #for oviposition
+  adultUDT   <- 31.1
+  eggDD      <- 122  # 220/9*5 = 122.22
+  larvaeDD   <- 156
+  pupDD      <- 152 #both males females combined Setyobudi 1989
+  OWlarvaeDD <- 86  # text OW stage dev 39 DD "post diapause"
+  adultDD    <- 79 # round from 79.2 time to 50% eggs laid
+  OWadultDD  <- 225  # text OW stage dev 39 DD "post diapause"
+  calctype   <-"triangle"
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 1     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 80    # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 320   # PEMs for mid larvae stage is 320 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 83    # PEMs for mid pupal stage is 83 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 107   # PEMs for adult stage (1st ovip.) is ca. 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- -3      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 41     # rough guess based on eggUDT
+  larvaeLLT    <- -24     # WSU Thesis 1985                                  
+  larvaeLLDAYS <- 4      #  "" ""
+  larvaeULT    <- 40     #  "" ""
+  adultLLT     <- -1     # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+  # END

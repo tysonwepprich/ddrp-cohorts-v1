@@ -1,0 +1,40 @@
+# these are params and values for SPP=
+#  GCA, Galerucella calmariensis
+  fullname   <- "Galerucella calmariensis"
+  pestof     <- "Biological control agent of purple loosestrife"
+  stgorder   <- c("OA","E","L","P","A","F") # "F" is end-of-day placeholder
+  owstage    <- "OA" # OA means ow as adult
+  eggLDT     <- 10
+  eggUDT     <- 35  #
+  larvaeLDT  <- 10
+  larvaeUDT  <- 35  #upper dev. threshold-need to verify
+  pupaeLDT   <- 10
+  pupaeUDT   <- 35
+  adultLDT   <- 13.5 #for oviposition
+  adultUDT   <- 35
+  eggDD      <- 93.3 # round from 69.3
+  larvaeDD   <- 136.4
+  pupDD      <- 137.7 # females
+  adultDD    <- 125.9 # round from 79.2 time to 50% eggs laid
+  OWadultDD  <- 108 # text OW stage dev 39 DD "post diapause"
+  calctype   <-"triangle"
+ # Pest Event Maps (PEMs) must be turned on (as a runtime param) for these to get used:
+  PEMnumgens      <- 2  # create PEMS for up to this many generations (max is 4)
+  eggEventDD      <- 5 # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel   <- "Beginning_of_egg_laying" # Label for PEM egg stage
+  larvaeEventDD   <- 70 # PEMs for mid-larval stage is 1/2 into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD    <- 10 # PEMs for pupal stage is 10 DDs into stage
+  pupaeEventLabel <- "Early-pupal_development" # Label for PEM pupal stage
+  adultEventDD    <- 15 # PEMs for adult stage (1st oviposition) is ca 45 DDs into stage
+  adultEventLabel <- "First_egglaying_by_females" # Label for PEM adult stage
+# Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- 0      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 38     # rough guess based on eggUDT
+  larvaeLLT    <- -1     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 2      #  "" ""
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- -5      # normally adults survive winter
+  adultLLDAYS  <- 5      # normally adults survive winter
+  # END

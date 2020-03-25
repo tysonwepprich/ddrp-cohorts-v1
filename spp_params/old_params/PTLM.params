@@ -1,0 +1,44 @@
+# Params and values for 
+#  PTLM, Pine Tree Lappet Moth, Dendrolimus pini - in Degs Celsius (C)
+#  model documentation at: http://uspest.org/wea/Dendrolimus_pini_model.pdf
+#  NOTES: this model uses combined threshold for all stages
+#
+  fullname     <- "pine_tree_lappet_moth"
+  pestof       <- "pine trees"
+  stgorder     <- c("OL","P","A","E","L","F") # "F" is end-of-day placeholder
+  owstage      <- "OL"   # OL means ow mainly as larvae
+  eggLDT       <- 7.22  
+  eggUDT       <- 30.0        
+  larvaeLDT    <- 7.22
+  larvaeUDT    <- 30.0  
+  pupaeLDT     <- 7.22 
+  pupaeUDT     <- 30.0
+  adultLDT     <- 7.22    
+  adultUDT     <- 30.0
+  eggDD        <- 181
+  larvaeDD     <- 1029
+  pupDD        <- 369 
+  adultDD      <- 110    # including Pre-OV and 35% OV
+  # full generation time: 181 + 1029 + 369 + 110 = 1689
+  OWlarvaeDD   <- 30    # OW to complete larval devel (most climates not in far North) = 574 - pupal dev 369 = 215 DD
+  calctype     <- "triangle"  # triangle similar to sine curve
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 1     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 80    # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 320   # PEMs for mid larvae stage is 320 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 83    # PEMs for mid pupal stage is 83 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 107   # PEMs for adult stage (1st ovip.) is ca. 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- 0      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 38     # rough guess based on eggUDT
+  larvaeLLT    <- -4     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 8      #  "" ""                           
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- 0      # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+  # END

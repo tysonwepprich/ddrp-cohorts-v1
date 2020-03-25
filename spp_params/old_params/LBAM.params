@@ -1,0 +1,71 @@
+# these are params and values for 
+#  LBAM, light brown apple moth, Epiphyas postvittana - in Degs Celsius (C)
+  fullname   <- "Light_brown_apple_moth"
+  pestof     <- "apple, pear, citrus, grapes, caneberries, over 500 known hosts"
+  stgorder   <- c("OL","P","A","E","L","F") # "F" is end-of-day placeholder
+  owstage    <- "OL"   # OL means ow mainly as larvae
+  eggLDT     <- 7.2    # from IPPC analysis of all avail. data sources
+  eggUDT     <- 31.1   # based on Danthanarayana 1975, Geier and Breise 1981, others       
+  larvaeLDT  <- 7.2
+  larvaeUDT  <- 31.1   #upper dev. threshold-need to verify
+  pupaeLDT   <- 7.2 
+  pupaeUDT   <- 31.1
+  adultLDT   <- 7.2    #for oviposition
+  adultUDT   <- 31.1
+  eggDD      <- 127    # 
+  larvaeDD   <- 407    # females on young apple
+  # the following suggest adding a new feature: season or generation-dependent DD reqs.
+  #  which could be implemented fairly easily (perhaps):
+  #larvaeDD   <- 494   # females on old apple
+  #larvaeDD   <- 348   # males on young apple
+  #larvaeDD   <- 453   # males on old apple
+  pupDD      <- 128    # females
+  adultDD    <- 71     # round from Pre-OV to 50% eggs laid; IPPC analysis
+  # full generation time: 127 + 407 + 128 + 71 = 733 vs 646 DD (6.8C Tlow) Gutierrez etal 2010 & Buergi et al. 2011
+  OWlarvaeDD <- 147    # 275 (published estim. for adult flight) - 128pupae = 147 DD "post diapause"
+  calctype   <-"triangle"  # triangle similar to sine curve
+  # NEW Gericke's LBAM cold and heat stress model
+  ChillT    <- 5  #lower chill threshold
+  HeatT     <- 30 #upper heat threshold
+  # I think we need to put ChillUnit thresholds in here too
+  # otherwise they are hard coded in DDRP itself
+  # PLACEHOLDER CHILL/HEAT STRESS - NOT ANALYZED AS YET FOR THIS SPP
+  chillstress_threshold  <- -20   # NEW all stages chill/heat stress units: threshold using daily Tlow not Tmean
+  chillstress_units_max1 <- 300  # 300 ChillDD excl1; so "most" all die once reached
+  chillstress_units_max2 <- 600  # 600 ChillDD excl2; so all die once reached
+  heatstress_threshold   <- 44   # estimated from ???
+  heatstress_units_max1  <- 75   # HeatDD excl1; so "most" all die once reached
+  heatstress_units_max2  <- 150  # HeatDD excl2; so all die once reached
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT     <- 0      # normally no eggs survive winter
+  eggLLDAYS  <- 2      # normally no eggs survive winter
+  eggULT     <- 38     # rough guess based on eggUDT
+  larvaeLLT  <- -1     # from Buergi and Mills 2010
+  larvaeLLDAYS <- 8    # from Buergi and Mills 2010
+  # conclude: "limited survival at below zero for more than one week during winter"
+  #  how to implement in code - possible business logic:
+  #   if stage == OL (this is the normal OW stage thus critical for climate sensitivity/exclusion maps)
+  #     and larvaeLLTDAYCOUNT >= larvaeLLDAYS then survivalPROB = 0 else
+  #      survivalPROB = 1 - (larvaeLLTDAYCOUNT/larvaeLLDAYS)
+  #      so if DAYCOUNT = 0 then survPROB = 1 - 0/8 = 1.0  
+  #      so if DAYCOUNT = 1 then survPROB = 1 - 1/8 = 0.875
+  #      so if DAYCOUNT = 3 then survPROB = 1 - 3/8 = 0.625
+  #      so if DAYCOUNT = 5 then survPROB = 1 - 5/8 = 0.375
+  #      so if DAYCOUNT = 7 then survPROB = 1 - 7/8 = 0.125
+  #      so if DAYCOUNT = 8 then survPROB = 1 - 8/8 = 0.0
+  larvaeULT  <- 41
+  adultLLT   <- 0     # normally no adults survive winter
+  adultLLDAYS <- 2    # normally no adults survive winter
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens <- 2     # create PEMS for up to this many generations (max is 4)
+  eggEventDD <- 5     # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD <- 203 # PEMs for mid larvae stage is 203 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD <- 64  # PEMs for mid pupal stage is 64 DDs into stage
+  pupaeEventLabel <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD <- 22  # PEMs for adult stage (1st ovip.) is ca. 22 DDs into stage
+  adultEventLabel <- "First_egglaying_by_females" # Label for PEM adult stage
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

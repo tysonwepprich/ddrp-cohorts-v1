@@ -1,0 +1,46 @@
+# Params and values for 
+#  JPSB, Japanese Pine Sawyer Beetle, Monochamus alternatus - in Degs Celsius (C)
+#  model documentation at: http://uspest.org/wea/Monochamus_alternatus_model.pdf
+#  NOTES: this model uses combined threshold for all stages; only adult flight and
+#    oviposition have significantly higher thresholds (ca. 21.3 C); all stages
+#    using same threshold for compliance with uspest.org site models 
+#
+  fullname     <- "Japanese_pine_sawyer_beetle"
+  pestof       <- "pine trees"
+  stgorder     <- c("OL","P","A","E","L","F") # "F" is end-of-day placeholder
+  owstage      <- "OL"   # OL means ow mainly as larvae
+  eggLDT       <- 12.2  
+  eggUDT       <- 38.0        
+  larvaeLDT    <- 12.2
+  larvaeUDT    <- 38.0  
+  pupaeLDT     <- 12.2 
+  pupaeUDT     <- 38.0
+  adultLDT     <- 12.2    
+  adultUDT     <- 38.0
+  eggDD        <- 83 
+  larvaeDD     <- 647
+  pupDD        <- 166 
+  adultDD      <- 207    # including Pre-OV and 35% OV
+  # full generation time: 83 + 647 + 166 + 103 + 103 = 1102
+  OWlarvaeDD   <- 30    # = OW to 5% emerge = 196 - pupal dev 166 = 30 DD
+  calctype     <- "triangle"  # triangle similar to sine curve
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 1     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 80    # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 320   # PEMs for mid larvae stage is 320 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 83    # PEMs for mid pupal stage is 83 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 107   # PEMs for adult stage (1st ovip.) is ca. 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- 0      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 38     # rough guess based on eggUDT
+  larvaeLLT    <- -4     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 8      #  "" ""                           
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- 0      # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+# END
