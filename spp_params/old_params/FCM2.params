@@ -1,0 +1,62 @@
+# these are OSU IPPC/APHIS PPQ DDRP_B1 model params and values for 
+#  FCM, false codling moth, Thaumatotibia leucotreta - in Degs Celsius (C)
+  fullname   <- "False_Codling_Moth"
+  pestof     <- "Citrus, corn, cotton, macadamia, avocado, stone fruits"
+  stgorder   <- c("OA","E","L","P","A","F") # "F" is end-of-day placeholder
+  owstage    <- "OA"  # OA means ow as adults
+  eggLDT     <- 11.93 # Daiber 1979
+  eggUDT     <- 38    # Johnson and Neven 2010 & Daiber: 40C as upper dev. threshold
+  larvaeLDT  <- 11.6  # Daiber 1979
+  larvaeUDT  <- 38    # based on Johnson and Neven 2010
+  pupaeLDT   <- 11.9  # Daiber 1979
+  pupaeUDT   <- 38    # assume same as larvae
+  adultLDT   <- 12.2  # Daiber 1980 for oviposition
+  adultUDT   <- 38    # assume same as larvae
+  eggDD      <- 69    # Daiber 1979    
+  larvaeDD   <- 156   # Daiber 1979
+  pupDD      <- 174   # Daiber 1979
+  #adultDD    <- 79   # Daiber 1980 time to 50% eggs laid
+  adultDD    <- 50 # approx time to 30% eggs laid
+  OWadultDD  <- 86  # text OW stage dev 39 DD "post diapause"
+  calctype   <- "average"
+  # Pest Event Maps (PEMs) must be turned on for these to get used:
+  PEMnumgens       <- 3  # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 65 # PEMs for egg stage is 65 DDs into stage (egg devel nearly complete)
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 78 # PEMs for larvae stage is 78 DDs (midway) into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 58 # PEMs for pupal stage is 58 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 22 # PEMs for adult stage (1st oviposition) is 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  # USING: Newer Chill/Heat stress Method; using data from Stotter and Terblanche 2009 J. Thermal Biol.
+  chillstress_threshold  <- -1   # NEW all stages chill/heat stress units: threshold using daily Tlow not Tmean
+  chillstress_units_max1 <- 25  #prev 30 ChillDD excl1; so "most" all die once reached
+  chillstress_units_max2 <- 75  #prev 130 ChillDD excl2; so all die once reached
+  heatstress_threshold   <- 40   # estimated from Johnson and Neven 2010
+  heatstress_units_max1  <- 75   # HeatDD excl1; so "most" all die once reached
+  heatstress_units_max2  <- 150  # HeatDD excl2; so all die once reached
+  # NOT USING: Lethal Temps using DayCount (Older) Method
+  eggLLT       <- -3     # normally no eggs survive winter
+  eggLLDAYS    <- 5      # normally no eggs survive winter
+  eggULT       <- 41     # rough guess based on eggUDT
+  larvaeLLT    <- -3    # placeholder guess only - is research available?
+  larvaeLLDAYS <- 10      #  "" ""
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- -1      # normally no adults survive winter
+  adultLLDAYS  <- 5      # normally no adults survive winter
+# TODO items:
+# 1) Update DD reqs, since LDT are all similar make same e.g. 12C for all stages
+# 2) Find more distrib. pubs to calibrate/validate climate suitability mapping params
+#
+#NAPPFAST FCM Doc notes: 10C very few eggs laid (Daiber 1980) pre-OV 27DD (12C). 
+#Peak OV within 3 days after emergence
+# 50% eggs laid 1st 1/3 of repro period. Survival reduced below 10C. 
+# Eggs/other stages killed below 1C
+# omnivourous - assume host plants avail everywhere/not limiting. 
+# From Daiber 1979abc,1980 Tlow=12C, Thi=40C
+# no OW stage but pupae selected as longest stage.
+#
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

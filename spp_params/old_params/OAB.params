@@ -1,0 +1,48 @@
+# Params and values for 
+#  OAB, Oak Ambrosia Beetle, Platypus quercivorus - in Degs Celsius (C)
+#  model documentation at: http://uspest.org/wea/OAB_model_analysis.pdf
+#  NOTES: this model uses combined threshold for all stages; only adult flight 
+#    may have a higher threshold (ca. 15 C), but springtime Tmax temps should exceed
+#    this value by the time they emerge 
+#
+  fullname     <- "Oak_ambrosia_beetle"
+  pestof       <- "oak trees"
+  stgorder     <- c("OL","P","A","E","L","F") # "F" is end-of-day placeholder
+  owstage      <- "OL"   # OL means ow mainly as larvae
+  eggLDT       <- 11.1  
+  eggUDT       <- 38.0        
+  larvaeLDT    <- 11.1
+  larvaeUDT    <- 38.0  
+  pupaeLDT     <- 11.1 
+  pupaeUDT     <- 38.0
+  adultLDT     <- 11.1    
+  adultUDT     <- 38.0
+  eggDD        <- 125
+  larvaeDD     <- 805
+  pupDD        <- 218 
+  adultDD      <- 339 # including ten.adult(111),tunnel building(166),init. OV(35%*178)
+  # full generation time: 125+805+218+111+166+178*0.35 = 1486
+  OWlarvaeDD   <- 235   # = OW larvae to first pupation = 235
+  calctype     <- "triangle"  # triangle similar to sine curve
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 2     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 122    # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  # end adult emerg = 1167 DD = 1st emerg (453)+adultDD(339)+eggDD(125)+.312*larvaeDD(251)
+  #  so estimated to be 251 into larvae development stage
+  larvaeEventDD    <- 251   # PEMs for approx end adult emerg. is ca. 251 DD into larval stage
+  larvaeEventLabel <- "End_adult_emergence" # Label for PEM larvae stage is actually for adults
+  pupaeEventDD     <- 109    # PEMs for mid pupal stage is 109 DDs into stage (late May in S. Japan)
+  pupaeEventLabel  <- "Mid-pupal_devel-_time_to_place_traps" # Label for PEM pupal stage
+  adultEventDD     <- 2   # PEMs for fist adult emergence
+  adultEventLabel  <- "1st_adult_emergence" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- 0      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 38     # rough guess based on eggUDT
+  larvaeLLT    <- -6     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 8      #  "" ""                           
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- 0      # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+# END

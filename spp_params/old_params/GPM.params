@@ -1,0 +1,40 @@
+# these are params and values for 
+#  GPM, Gypsy Moth
+  fullname   <- "Gypsy_Moth_based_mainly_on_Sheehan_1992"
+  pestof     <- "Oak, Maple, other hardwoods"
+  stgorder   <- c("OE","L","P","A","E","F")
+  owstage    <- "OE"
+  eggLDT     <- 3    # Sheehan
+  eggUDT     <- 38   # Sheehan nominal
+  larvaeLDT  <- 8.1  # Sheehan
+  larvaeUDT  <- 41   # Sheehan nominal
+  pupaeLDT   <- 5.1  # Sheehan
+  pupaeUDT   <- 41   # Sheehan nominal
+  adultLDT   <- 10   #for oviposition
+  adultUDT   <- 31.1
+  OWeggDD    <- 756  # text OW stage dev 39 DD "post diapause"
+  eggDD      <- 10000  # in Diapause; no development so infinate DDs
+  larvaeDD   <- 650
+  pupDD      <- 234 #both males females combined Setyobudi 1989
+  adultDD    <- 300 # round from 79.2 time to 50% eggs laid
+  calctype   <-"triangle"
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 1     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 3     # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 320   # PEMs for mid larvae stage is 320 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 116    # PEMs for mid pupal stage is 83 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 107   # PEMs for adult stage (1st ovip.) is ca. 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <- -18      # OW eggs must be near this value
+  eggLLDAYS    <- 8      # normally no eggs survive winter
+  eggULT       <- 42     # rough guess based on eggUDT
+  larvaeLLT    <- -4     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 2      #  "" ""
+  larvaeULT    <- 42     #  "" ""
+  adultLLT     <- 0      # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+  # END

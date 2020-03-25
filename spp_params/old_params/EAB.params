@@ -1,0 +1,53 @@
+# Params and values for 
+#  EAB, Emerald Ash Borer, Agrilus planipennis - in Degs Celsius (C)
+#  model documentation at: http://uspest.org/wea/EAB_model_analysis.pdf
+#  Researcher: Brittany S. Barker 
+  fullname     <- "Emeral ash borer"
+  pestof       <- "ash trees"
+  #stgorder  <- c("OWlarvae","pupae","adult","egg","larvae") # reassigned as 1, 2, 3, 4, 5 in model; OW = overwintering stage 
+  stgorder <- c("OL","P","A","E","L","F")  
+  owstage <- c("OL")
+  obligate_diapause   <- 1  # emerald ash borer has an obligate winter diapause, so only 1 gen per year
+  eggLDT       <- 13.9 
+  eggUDT       <- 35      
+  larvaeLDT    <- 7.6
+  larvaeUDT    <- 30  
+  pupaeLDT     <- 10.3 
+  pupaeUDT     <- 30
+  adultLDT     <- 11.9    
+  adultUDT     <- 30
+  eggDD        <- 155
+  larvaeDD     <- 2160
+  pupDD      <- 127 
+  adultDD      <- 280
+  # full generation time: 
+  OWlarvaeDD   <- 100 # OW stage at least 100 DD to begin pupation 
+  calctype     <- "triangle"  # triangle similar to sine curve
+  # Pest Event Maps (PEMs) must be turned on as a runtime param for these to get used:
+  PEMnumgens       <- 1     # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 152    # PEMs for egg hatch is at end of stage
+  eggEventLabel    <- "beginning of egg hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 200   # PEMS for J-larvae stage is ca. 200 DDs into larvae stage 
+  larvaeEventLabel <- "J-larvae development" # Label for PEM larvae stage 
+  pupaeEventDD  <- 127
+  pupaeEventLabel  <- "end of pupal stage - adults about to emerge"  
+# pupaeEventDD     <-  63   # PEMs for mid pupal stage
+  #pupaeEventLabel  <- "mid-pupal devel- time to place traps" # Label for PEM pupal stage
+  adultEventDD     <- 225   # PEMs for first oviposition
+  adultEventLabel  <- "first egg laying" # Label for PEM adult stage
+  # Exclusion Maps must be turned on as a runtime param for these to get used:
+  eggLLT       <-       
+  eggLLDAYS    <-       
+  eggULT       <-      
+  larvaeLLT    <-     
+  larvaeLLDAYS <-                                
+  larvaeULT    <-     
+  adultLLT     <-        
+  adultLLDAYS  <-   
+  chillstress_threshold <- -30
+  chillstress_units_max1 <- 5 # use for chill stress units: ChillDD limit; so "most" all die once reached
+  chillstress_units_max2 <- 10 # use for chill stress units: ChillDD limit; so all die once reached
+  heatstress_threshold <- 35
+  heatstress_units_max1 <- 50 # use for heat stress units: HeatDD limit; so "most" all die once reached
+  heatstress_units_max2 <- 140 # use for heat stress units: HeatDD limit; so all die once reached  
+# END

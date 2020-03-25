@@ -147,11 +147,11 @@ if (!is.na(opts[1])) {
   #### * Default values for params, if not provided in command line ####
   spp           <- "GCA" # Default species to use
   forecast_data <- "PRISM" # Forecast data to use (PRISM or NMME)
-  start_year    <- 2018 # Year to use
+  start_year    <- 2023 # Year to use
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
-  region_param  <- "AR" # Default REGION to use
+  region_param  <- "OR" # Default REGION to use
   exclusions_stressunits    <- 0 # Turn on/off climate stress unit exclusions
   pems          <- 0 # Turn on/off pest event maps
   mapA          <- 1 # Make maps for adult stage
@@ -178,25 +178,29 @@ if(server == "hopper"){
   params_dir <- "/usr/local/dds/DDRP_DOD/spp_params/" # tyson's HOPPER
 }
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
+if(start_year > 2020) forecast_data <- "MACA"
+if(region_param == "CONUSPLUS") forecast_data <- "DAYMET"
+if(end_doy == 366) end_doy <- 365 # Len's hopper "datetoday" function gives 366 even in non-leap years
 
 if(forecast_data == "PRISM"){
   base_dir <- "/data/PRISM/"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0 "
 }
 
 if(forecast_data == "DAYMET"){
   # North America Daymet data
   base_dir <- "/home/tyson/REPO/photovoltinism/daymet/"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0" 
 }
 
 if(forecast_data == "MACA"){
-  base_dir <- "/home/macav2metdata"
+  base_dir <- "/home/macav2metdata/GFDL-ESM2M/"
   prism_dir <- paste0(base_dir, start_year)
+  raster_crs <- "+proj=longlat +pm=0 +a=6378137 +rf=298.257223563" 
 }
 
-
-# # CONUS MACAv2 forecasts
 
 cat("\nBASE DIR: ", base_dir, "\n")
 cat("\nWORKING DIR: ", prism_dir, "\n")
@@ -289,32 +293,32 @@ if (!grepl("[A-z]", start_year)) {
   start_year <- as.numeric(start_year)
 }
 
-# Set up start and stop day of year depending on whether it's a leap year or
-# not (need to modify the last day of the year if the year is a leap year 
-# and user wants to include it)
-# This does not apply to 30 yr climate data, which would not have a numeric
-# start year
-if (is.numeric(start_year)) {
-  
-  if (start_year %% 4 == 0 & keep_leap == 1) {
-    cat(str_wrap(paste0(start_year, " is a leap year and leap day (2/29) will be 
-                 included in the model"), width = 80), "\n", 
-        file = Model_rlogging, append = TRUE)
-    
-    # Need to add an extra day onto year if all 365 days are being included
-    if (end_doy == 365) {
-      end_doy <- 366
-    }
-    
-  } else if (start_year %% 4 == 0 & keep_leap == 0) {
-    cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
-                        not be included in the model"), width = 80), "\n", 
-        file = Model_rlogging, append = TRUE)
-  } else if (start_year %% 4 != 0) {
-    cat(start_year, "is not a leap year - ignoring 'keep_leap' parameter\n", 
-        file = Model_rlogging, append = TRUE)
-  }
-}
+# # Set up start and stop day of year depending on whether it's a leap year or
+# # not (need to modify the last day of the year if the year is a leap year 
+# # and user wants to include it)
+# # This does not apply to 30 yr climate data, which would not have a numeric
+# # start year
+# if (is.numeric(start_year)) {
+#   
+#   if (start_year %% 4 == 0 & keep_leap == 1) {
+#     cat(str_wrap(paste0(start_year, " is a leap year and leap day (2/29) will be 
+#                  included in the model"), width = 80), "\n", 
+#         file = Model_rlogging, append = TRUE)
+#     
+#     # Need to add an extra day onto year if all 365 days are being included
+#     if (end_doy == 365) {
+#       end_doy <- 366
+#     }
+#     
+#   } else if (start_year %% 4 == 0 & keep_leap == 0) {
+#     cat(str_wrap(paste0(start_year, " is a leap year but leap day (2/29) will 
+#                         not be included in the model"), width = 80), "\n", 
+#         file = Model_rlogging, append = TRUE)
+#   } else if (start_year %% 4 != 0) {
+#     cat(start_year, "is not a leap year - ignoring 'keep_leap' parameter\n", 
+#         file = Model_rlogging, append = TRUE)
+#   }
+# }
 
 # Create a list of days to use for daily loop
 sublist <- start_doy:end_doy
@@ -501,28 +505,49 @@ cat("\nDone writing metafile\n\n", forecast_data, " DATA PROCESSING\n",
 # Weather inputs and outputs - PRISM climate data w/subdirs 4-digit year
 # New feature - choose whether to use PRISM or NMME for weather forecasts 
 # (forecast_data = PRISM, or forecast_data = NMME)
-# tminfiles <- list.files(path = prism_dir, 
-#                         pattern = glob2rx(paste0("*DAYMET_tmin_*", 
-#                                                  start_year, "*.grd$*")), 
-#                         all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tminfiles <- list.files(path = prism_dir,
-                        pattern = glob2rx(paste0("*PRISM_tmin_*",
-                                                 start_year, "*.bil$*")),
-                        all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tminfiles <- ExtractBestPRISM(tminfiles, forecast_data, 
-                              keep_leap)[start_doy:end_doy]
+if(forecast_data == "PRISM"){
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*PRISM_tmin_*",
+                                                   start_year, "*.bil$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  tminfiles <- ExtractBestPRISM(tminfiles, forecast_data, 
+                                keep_leap)[start_doy:end_doy]
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*PRISM_tmax_*",
+                                                   start_year, "*.bil$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)
+  tmaxfiles <- ExtractBestPRISM(tmaxfiles, forecast_data, 
+                                keep_leap) [start_doy:end_doy]
+}
 
-# tmaxfiles <- list.files(path = prism_dir, 
-#                         pattern = glob2rx(paste0("*DAYMET_tmax_*",
-#                                                  start_year, "*.grd$*")), 
-#                         all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tmaxfiles <- list.files(path = prism_dir,
-                        pattern = glob2rx(paste0("*PRISM_tmax_*",
-                                                 start_year, "*.bil$*")),
-                        all.files = FALSE, full.names = TRUE, recursive = TRUE)
-tmaxfiles <- ExtractBestPRISM(tmaxfiles, forecast_data, 
-                              keep_leap) [start_doy:end_doy]
 
+
+if(forecast_data == "MACA"){
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*MACAV2_tmin_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*MACAV2_tmax_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
+}
+
+if(forecast_data == "DAYMET"){
+  
+  tminfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*DAYMET_tmin_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
+  
+  tmaxfiles <- list.files(path = prism_dir,
+                          pattern = glob2rx(paste0("*DAYMET_tmax_*",
+                                                   start_year, "*.grd$*")),
+                          all.files = FALSE, full.names = TRUE, recursive = TRUE)[start_doy:end_doy]
+  
+}
 ## Extract date from temperature files using regex pattern matching
 dats <- regmatches(tminfiles, regexpr(pattern = "[0-9]{8}", text = tminfiles))
 
@@ -574,7 +599,8 @@ REGION <- Assign_extent(region_param) # Bounding box
 template <- crop(raster(tminfiles[1]), REGION) # Template for cropping
 template[!is.na(template)] <- 0
 dataType(template) <- "INT2U"
-crs <- crs("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0, 0, 0")
+# crs <- crs("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0, 0, 0")
+crs <- crs(raster_crs)
 crs(template) <- crs
 
 #### * If CONUS or EAST, split template into tiles (and run in parallel)
@@ -1712,11 +1738,10 @@ if(do_photo){
   
   # Weight diapause stuff
   to_weight <- list(FullGen_fls, AttVolt_fls, Diapause_fls, Mismatch_fls)
-  # RegCluster(4)
+  RegCluster(4)
   Diap_wtd_fls <- foreach(index = 1:4, 
                           .packages = pkgs, 
                           .inorder = FALSE) %do% {
-                            print(index)
                             fls <- to_weight[[index]]
                             if(index == 1){ # FullGen not multiplied by 1000 like others
                               Ras_weighted <- mapply(function(x,y) { 
@@ -1735,7 +1760,7 @@ if(do_photo){
                             return(paste0(paste(c("FullGen", "AttVolt", "Diapause", "Mismatch")[index], 
                                                 "all", "weighted", sep="_"), ".tif"))
                           }
-  # stopCluster(cl)
+  stopCluster(cl)
   
   
   ### * Create summary maps of Diapause results, weighted across cohorts
@@ -1762,12 +1787,12 @@ if(do_photo){
   # RegCluster(ncohort)
   Diap_sum_maps <- foreach(index = 1:nlayers(Diap_wtd_mrgd_brk), 
                            .packages = pkgs, .inorder = TRUE) %do%{
-                             print(index)
+                             # print(index)
                              brk <- Diap_wtd_mrgd_brk[[index]] 
                              nam <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,1])
-                             print(nam)
+                             # print(nam)
                              dat <- unique(str_split_fixed(names(brk), pattern = "_", 2)[,2])
-                             print(dat)
+                             # print(dat)
                              brk <- brk + template # adding template ensures NA's are NA's instead of 0
                              df <- ConvDF(brk)
                              if(all(df$value == 0)){
@@ -1806,21 +1831,6 @@ if(do_photo){
                                    paste0(levels(df$value)[length(levels(df$value))], " or more")
                                  plotmax <- 5
                                }
-                               
-                               # # Auto binning, even classes but nonintuitive breaks
-                               # df$value <- round(df$value / 1000 / .5) * .5
-                               # df2 <- Cut_bins(df, 10)
-                               
-                               # sites <- data.frame(ID = c(
-                               #   "Vantage, WA", 
-                               #   "Sutherlin, OR", "Bellingham, WA",
-                               #   "McArthur, CA", "Palermo, CA", "Rickreall, OR"),
-                               #   x = c(-120.461073,
-                               #         -123.315854, -122.479482,
-                               #         -121.41, -121.58, -123.27),
-                               #   y = c(46.680138,
-                               #         43.387721, 48.756105,
-                               #         41.10, 39.41, 44.98))
                                
                                p <- Base_map(df) + 
                                  scale_fill_viridis(discrete = TRUE, name = "Generations", 

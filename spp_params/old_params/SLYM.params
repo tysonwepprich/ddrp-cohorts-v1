@@ -1,0 +1,46 @@
+# these are OSU IPPC/PPQ CPHST DDRP_B1 params and values for 
+#  SLYM, silver Y moth, Autographa gamma model in Degs Celsius (C)
+#  see spreadsheet silver_Y_moth_r45c.xls for model documentation
+#  primary ref: Honek, A, V Jarosik, Z. Martinkova, I. Novak. 2002 Food induced var. of thermal constants of devel. and 
+#  growth of Autographa gamma larvae. Eur. J. Entomol. 99:241-252.
+  fullname   <- "Silver_Y_Moth"
+  pestof     <- "many hosts including garden pea, sugar beet, cabbage, vegetabless"
+  stgorder   <- c("OL","A","E","L","P","F") # "F" is end-of-day placeholder
+  owstage    <- "OL"   # OL late instart larvae in the soil
+  eggLDT     <- 7.22   # 
+  eggUDT     <- 37.8   #
+  larvaeLDT  <- 7.22   # 
+  larvaeUDT  <- 37.8   # 
+  pupaeLDT   <- 7.22   # 
+  pupaeUDT   <- 37.8   # 
+  adultLDT   <- 7.22   # 
+  adultUDT   <- 37.8   # 
+  eggDD      <- 106    # 
+  larvaeDD   <- 297    # 
+  pupDD      <- 328    # 
+  OWlarvaeDD <- 141    #  
+  adultDD    <- 156    # 
+  calctype   <-"average"
+  # Upper and Lower lethal temps only used when "exclusions" turned on as a runtime param:
+  #   NEED more info these are guesses only
+  eggLLT     <- -1
+  eggLLDAYS  <- 2
+  eggULT     <- 41
+  larvaeLLT  <- -4
+  larvaeLLDAYS <- 3
+  larvaeULT  <- 44
+  adultLLT   <- -1
+  adultLLDAYS <- 2
+  # Pest Event Maps (PEMs) must be turned on (as a runtime param) for these to get used:
+  PEMnumgens <- 3  # create PEMS for up to this many generations (max is 4)
+  eggEventDD <- 5 # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD <- 150 # PEMs for mid-larval stage is 1/2 into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD <- 165 # PEMs for pupal stage is 165 DDs into stage
+  pupaeEventLabel <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD <- 109 # PEMs for adult stage (1st oviposition) is ca 109 DDs into stage
+  adultEventLabel <- "First_egglaying_by_females" # Label for PEM adult stage
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

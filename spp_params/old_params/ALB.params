@@ -1,0 +1,63 @@
+# these are OSU IPPC/APHIS PPQ DDRP model params and values for 
+#  ALB, asian longhorned beetle, Anoplophora glabripennis (Motschulsky) - in Degs Celsius (C)
+  fullname   <- "Asian_Longhorned_Beetle"
+  pestof     <- "ash, birch, elm, maple, buckeye, mimosa, poplar, willow, sev. other trees"
+  stgorder   <- c("OL","P","A","E","L","F") # "F" is end-of-day placeholder
+  owstage    <- "OL"  # OA means ow as adults
+  eggLDT     <- 10    # IPPC modeling http://uspest.org/wea/ALB_model_v1.pdf
+  eggUDT     <- 35    # IPPC modeling
+  larvaeLDT  <- 10    # IPPC modeling
+  larvaeUDT  <- 35    # IPPC modeling
+  pupaeLDT   <- 10    # IPPC modeling
+  pupaeUDT   <- 35    # IPPC modeling
+  adultLDT   <- 10    # IPPC modeling
+  adultUDT   <- 35    # IPPC modeling
+  eggDD      <- 240   # IPPC modeling  
+  larvaeDD   <- 5510  # IPPC modeling
+  pupDD      <- 260   # IPPC modeling
+  adultDD    <- 256   # IPPC modeling approx time to 30% oviposition
+  OWlarvaeDD <- 296   # OW stage 296 DD to begin pupation
+  calctype   <- "average"
+  # Pest Event Maps (PEMs) must be turned on for these to get used:
+  PEMnumgens       <- 1  # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 220 # PEMs for egg stage hatch is ca 220 DDs into stage (egg devel nearly complete)
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 2250 # PEMs for larvae stage is 2250 DDs (midway) into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 255 # PEMs for pupal stage is at end to signal first adults
+  pupaeEventLabel  <- "First_adults" # Label for PEM pupal stage
+  #adultEventDD     <- 250 # PEMs for adult stage (ca. 30% flight) is 250 DDs into stage 
+  adultEventDD     <- 16 # PEMs for adult stage (ca. 2% flight) is 16 DDs into stage 
+  #adultEventLabel  <- "30%_adult_flight" # Label for PEM adult stage
+  adultEventLabel  <- "2%_adult_flight" # Label for PEM adult stage
+  # USING: Newer Chill/Heat stress Method; using data from Stotter and Terblanche 2009 J. Thermal Biol.
+  chillstress_threshold  <- -20   # NEW all stages chill/heat stress units: threshold using daily Tlow not Tmean
+  chillstress_units_max1 <- 300  # 300 ChillDD excl1; so "most" all die once reached
+  chillstress_units_max2 <- 600  # 600 ChillDD excl2; so all die once reached
+  heatstress_threshold   <- 40   # estimated from ???
+  heatstress_units_max1  <- 75   # HeatDD excl1; so "most" all die once reached
+  heatstress_units_max2  <- 150  # HeatDD excl2; so all die once reached
+  # NOT USING: Lethal Temps using DayCount (Older) Method
+  eggLLT       <- -10     # normally no eggs survive winter
+  eggLLDAYS    <- 6      # normally no eggs survive winter
+  eggULT       <- 40     # rough guess based on eggUDT
+  larvaeLLT    <- -25    # placeholder guess only - is research available?
+  larvaeLLDAYS <- 10      #  "" ""
+  larvaeULT    <- 40     #  "" ""
+  adultLLT     <- -5      # normally no adults survive winter
+  adultLLDAYS  <- 5      # normally no adults survive winter
+# TODO items:
+# 1) Find better lethal temp studies
+# 2) Find more distrib. pubs to calibrate/validate climate suitability mapping params
+#
+#NAPPFAST FCM Doc notes: 10C very few eggs laid (Daiber 1980) pre-OV 27DD (12C). 
+#Peak OV within 3 days after emergence
+# 50% eggs laid 1st 1/3 of repro period. Survival reduced below 10C. 
+# Eggs/other stages killed below 1C
+# omnivourous - assume host plants avail everywhere/not limiting. 
+# From Daiber 1979abc,1980 Tlow=12C, Thi=40C
+# no OW stage but pupae selected as longest stage.
+#
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

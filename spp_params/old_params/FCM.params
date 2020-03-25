@@ -1,0 +1,49 @@
+# these are params and values for 
+#  FCM, false codling moth, Thaumatotibia leucotreta - in Degs Celsius (C)
+  fullname   <- "False_Codling_Moth"
+  pestof     <- "Citrus, corn, cotton, macadamia, avocado, stone fruits"
+  stgorder   <- c("OA","E","L","P","A","F") # "F" is end-of-day placeholder
+  owstage    <- "OA"   # OA means ow as adults
+  eggLDT     <- 11.93
+  eggUDT     <- 40  # Daiber: 40C as upper dev. threshold
+  larvaeLDT  <- 11.6
+  larvaeUDT  <- 34 #upper dev. threshold-need to verify
+  pupaeLDT   <- 11.9
+  pupaeUDT   <- 40
+  adultLDT   <- 12.2 #for oviposition
+  adultUDT   <- 40
+  eggDD      <- 69  # round from 69.3
+  larvaeDD   <- 156
+  pupDD      <- 174 #females
+  adultDD    <- 79 # round from 79.2 time to 50% eggs laid
+  OWadultDD  <- 86  # text OW stage dev 39 DD "post diapause"
+  calctype   <- "average"
+  # Pest Event Maps (PEMs) must be turned on for these to get used:
+  PEMnumgens <- 2  # create PEMS for up to this many generations (max is 4)
+  eggEventDD <- 5 # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel    <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 78 # PEMs for larvae stage is 78 DDs into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD     <- 58 # PEMs for pupal stage is 58 DDs into stage
+  pupaeEventLabel  <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD     <- 22 # PEMs for adult stage (1st oviposition) is 22 DDs into stage
+  adultEventLabel  <- "First_egglaying_by_females" # Label for PEM adult stage
+  eggLLT       <- -3      # normally no eggs survive winter
+  eggLLDAYS    <- 2      # normally no eggs survive winter
+  eggULT       <- 41     # rough guess based on eggUDT
+  larvaeLLT    <- -12     # placeholder guess only - is research available?
+  larvaeLLDAYS <- 2      #  "" ""
+  larvaeULT    <- 41     #  "" ""
+  adultLLT     <- 0      # normally no adults survive winter
+  adultLLDAYS  <- 2      # normally no adults survive winter
+#NAPPFAST FCM Doc notes: 10C very few eggs laid (Daiber 1980) pre-OV 27DD (12C). 
+#Peak OV within 3 days after emergence
+# 50% eggs laid 1st 1/3 of repro period. Survival reduced below 10C. 
+# Eggs/other stages killed below 1C
+# omnivourous - assume host plants avail everywhere/not limiting. 
+# From Daiber 1979abc,1980 Tlow=12C, Thi=40C
+# no OW stage but pupae selected as longest stage.
+#
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

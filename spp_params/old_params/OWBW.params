@@ -1,0 +1,48 @@
+# these are OSU IPPC/PPQ CPHST DDRP_B1 params and values for 
+#  OWBW, old world bollworm, Helicoverpa armigera (Hubner) model in Degs Celsius (C)
+  fullname   <- "Old_World_Bollworm"
+  pestof     <- "corn,grains,cotton,citrus,flowers,vegetables,tomato,tobacco,potato,soybeans,alfalfa,beans"
+  stgorder   <- c("OP","A","E","L","P","F") # "F" is end-of-day placeholder
+  owstage    <- "OP"   # OP pupae in diapause in the soil
+  # Notes on devel: opt temp for larvae->adults 33.9C (Twine 1978), opt survival temps 24-27C
+  #   high temps in lab lead to pupal dormancy (Nibouche 1998)
+  eggLDT     <- 10.5   # Jallow and Matsumura 2001; 11 reported by Twine 1978, Maelzer and Zalucki 1999
+  eggUDT     <- 40     # Unknown, but 40 is a good nominal value
+  larvaeLDT  <- 11     # combined from studies cited in Table D1, Venette at al 2003 Note this Mini Risk Assessment did not
+                       # cite Younis and Ottea 1993, which is what NAPPFAST model was based on (13.87C lower threshold all stages)
+  larvaeUDT  <- 40     # nominal upper dev. threshold-need to verify
+  pupaeLDT   <- 11.4   # Twine 1978
+  pupaeUDT   <- 40     # nominal; pupae in soil so upper threshold not criticle
+  adultLDT   <- 11     # for oviposition; estim from Table D1, Venette etal 2003
+  adultUDT   <- 34     # egglaying ceases during warm dry conditions (King 1994)
+  eggDD      <- 51     # Jallow and Matsumura 2001
+  larvaeDD   <- 240    # combined from studies cited in Table D1, Venette etal 2003
+  pupDD      <- 211    # Twine 1978
+  OWpupDD    <- 126    # assume post diapause pupal devel. in spring is ca. 60% of full pupal req. = 126 DD 
+                       # need more info on 1st spring flight times 
+  adultDD    <- 107    # estim time to 50% OV; mating 1-4 days & OV 2-6 days after emergence: 5 days x 20-11 = 45 DD
+                       # ov period up to 4 weeks, assume 50% after 8 days x 20-11 = 72 DD; 45+72=107 DD
+  calctype   <-"average"
+  # Upper and Lower lethal temps only used when "exclusions" turned on as a runtime param:
+  #   NEED more info these are guesses only
+  eggLLT     <- -1
+  eggULT     <- 41
+  larvaeLLT  <- -4
+  larvaeULT  <- 40
+  adultLLT   <- -1
+  # Pest Event Maps (PEMs) must be turned on (as a runtime param) for these to get used:
+  PEMnumgens <- 2  # create PEMS for up to this many generations (max is 4)
+  eggEventDD <- 5 # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel <- "Beginning_of_egg_hatch" # Label for PEM egg stage
+  larvaeEventDD <- 120 # PEMs for mid-larval stage is 1/2 into stage
+  larvaeEventLabel <- "Mid-larval_development" # Label for PEM larvae stage
+  pupaeEventDD <- 105 # PEMs for pupal stage is 105 DDs into stage
+  pupaeEventLabel <- "Mid-pupal_development" # Label for PEM pupal stage
+  adultEventDD <- 45 # PEMs for adult stage (1st oviposition) is ca 45 DDs into stage
+  adultEventLabel <- "First_egglaying_by_females" # Label for PEM adult stage
+#Criticle photoperiod for diapause induction: 11.5-12.5 hrs + low temps 19-23C or when larvase
+#  are exposed to long hot and dry periods (King 1994, Zhou et al 2000, Shimizu and Fujisaki 2002)
+#  little or no diapause in tropics.
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#

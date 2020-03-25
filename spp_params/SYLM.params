@@ -1,0 +1,56 @@
+# these are OSU IPPC/PPQ CPHST DDRP_B1 params and values for 
+#  SLYM, silver Y moth, Autographa gamma model in Degs Celsius (C)
+#  see spreadsheet silver_Y_moth_r45c.xls for model documentation
+#  primary ref: Honek, A, V Jarosik, Z. Martinkova, I. Novak. 2002 Food induced var. of thermal constants of devel. and 
+#  growth of Autographa gamma larvae. Eur. J. Entomol. 99:241-252.
+# Last updated in June 2019 for DDRP v2 (cohorts)
+  fullname   <- "Silver Y moth"
+  pestof     <- "many hosts including garden pea, sugar beet, cabbage, vegetabless"
+  stgorder   <- c("OL","A","E","L","P","F") # "F" is end-of-day placeholder in DDRP v1; stgorder changed to 1, 2, 3, 4, 5 in DDRP v2
+  owstage    <- "OL"   # OW larvae late instart larvae in the soil
+  eggLDT     <- 7.22   # 
+  eggUDT     <- 37.8   #
+  larvaeLDT  <- 7.22   # 
+  larvaeUDT  <- 37.8   # 
+  pupaeLDT   <- 7.22   # 
+  pupaeUDT   <- 37.8   # 
+  adultLDT   <- 7.22   # 
+  adultUDT   <- 37.8   # 
+  eggDD      <- 106    # 
+  larvaeDD   <- 297    # 
+  pupDD      <- 328    # 
+  OWlarvaeDD <- 141    # 
+  adultDD    <- 156    # 
+  calctype   <-"average"
+  # Upper and Lower lethal temps only used when "exclusions" turned on as a runtime param:
+  #   NEED more info these are guesses only
+  eggLLT     <- -1
+  eggLLDAYS  <- 2
+  eggULT     <- 41
+  larvaeLLT  <- -4
+  larvaeLLDAYS <- 3
+  larvaeULT  <- 44
+  adultLLT   <- -1
+  adultLLDAYS <- 2
+  # Pest Event Maps (PEMs) must be turned on (as a runtime param) for these to get used:
+  PEMnumgens       <- 3  # create PEMS for up to this many generations (max is 4)
+  eggEventDD       <- 5 # PEMs for egg stage is 5 DDs into stage
+  eggEventLabel    <- "beginning of egg hatch" # Label for PEM egg stage
+  larvaeEventDD    <- 150 # PEMs for mid-larval stage is 1/2 into stage
+  larvaeEventLabel <- "mid-larval development" # Label for PEM larvae stage
+  pupaeEventDD     <- 165 # PEMs for pupal stage is 165 DDs into stage
+  pupaeEventLabel  <- "mid-pupal development" # Label for PEM pupal stage
+  adultEventDD     <- 109 # PEMs for adult stage (1st oviposition) is ca 109 DDs into stage
+  adultEventLabel  <- "first egglaying" # Label for PEM adult stage
+  OWEventP         <- 0.5 # PEMs for OWlarvae stage is half-way (50%) into stage
+  OWEventLabel     <- "mid-larvae development" # Label for OWlarvae stage
+# OW stage emergence parameters (DDRP v2 only)
+  distro_mean <- 120
+  distro_var <- 2000
+  xdist1 <- 100
+  xdist2 <- 250
+  length_out <- 1000
+  distro_shape <- "normal" 
+#LLT = lower lethal temperature (PRISM tmin), 
+#ULT = upper lethal temperature (PRISM tmax)
+#
