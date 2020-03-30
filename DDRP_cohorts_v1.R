@@ -12,20 +12,26 @@ pkgs <- c("doParallel", "plyr", "dplyr", "foreach", "ggplot2", "ggthemes",
           "tidyr", "tictoc", "tools", "viridis")
 
 # change this to switch paths to Tyson's Hopper/Grub values
-server <- "hopper"
+server <- "ento"
 
 # Library path
-if(server == "hopper"){
+if(server == "ento"){
   ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library,
-                                                                lib.loc = "/usr/local/lib64/R/library/", character.only = TRUE))))
+                                                                lib.loc = "/home/tyson/R/x86_64-redhat-linux-gnu-library/3.6", character.only = TRUE))))
 }
 if(server == "grub"){
   ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library, 
                                                                 lib.loc = "/usr/lib64/R/library/", character.only = TRUE)))) #GRUB
 }
-
+if(server == "hopper"){
+  ld_pkgs <- invisible(suppressMessages(suppressWarnings(lapply(pkgs, library,
+                                                                lib.loc = "/usr/local/lib64/R/library/", character.only = TRUE))))
+}
 # Load collection of functions for this model
 # source("/usr/local/dds/DDRP_B1/DDRP_cohorts_v1_funcs.R") #BRITTANY
+if(server == "ento"){
+  source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #ENTO
+}
 if(server == "grub"){
   source("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_cohorts_v1_funcs.R") #GRUB
 }
@@ -145,32 +151,35 @@ if (!is.na(opts[1])) {
   cp_sd <- opts$cp_sd
 } else {
   #### * Default values for params, if not provided in command line ####
-  spp           <- "GCA" # Default species to use
-  forecast_data <- "PRISM" # Forecast data to use (PRISM or NMME)
-  start_year    <- 2023 # Year to use
+  spp           <- "DCA" # Default species to use
+  forecast_data <- "DAYMET" # Forecast data to use (PRISM or NMME)
+  start_year    <- 2010 # Year to use
   start_doy     <- 1 # Start day of year          
   end_doy       <- 365 # End day of year - need 365 if voltinism map 
   keep_leap     <- 0 # Should leap year be kept?
-  region_param  <- "OR" # Default REGION to use
+  region_param  <- "LOCO" # Default REGION to use
   exclusions_stressunits    <- 0 # Turn on/off climate stress unit exclusions
   pems          <- 0 # Turn on/off pest event maps
   mapA          <- 1 # Make maps for adult stage
   mapE          <- 1 # Make maps for egg stage
   mapL          <- 1 # Make maps for larval stage
   mapP          <- 1 # Make maps for pupal stage
-  out_dir       <- "GCA_test" # Output dir
+  out_dir       <- "DCA_BigBend" # Output dir
   out_option    <- 1 # Output option category
-  ncohort       <- 5 # Number of cohorts to approximate end of OW stage
+  ncohort       <- 3 # Number of cohorts to approximate end of OW stage
   odd_gen_map   <- 0 # Create summary plots for odd gens only (gen1, gen3, ..)
   do_photo      <- 1 # Use photoperiod diapause modules in daily loop and results
-  cp_mean       <- 14.5 # Critical photoperiod mean
-  cp_sd         <- .2 # Standard deviation around cp_mean
+  cp_mean       <- 11.94 # Critical photoperiod mean
+  cp_sd         <- 1 # Standard deviation around cp_mean
 }
 
 # (2). DIRECTORY INIT ------
 
 #### * Param inputs - species params; thresholds, weather, etc. ####
 # params_dir <- "/usr/local/dds/DDRP_B1/spp_params/" # BRITTANY
+if(server == "ento"){
+  params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/" # tyson's ENTO
+}
 if(server == "grub"){
   params_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/spp_params/" # tyson's GRUB
 }
@@ -179,7 +188,7 @@ if(server == "hopper"){
 }
 #### * Weather inputs and outputs - climate data w/subdirs 4-digit year ####
 if(start_year > 2020) forecast_data <- "MACA"
-if(region_param == "CONUSPLUS") forecast_data <- "DAYMET"
+if(region_param %in% c("CONUSPLUS", "WESTPLUS")) forecast_data <- "DAYMET"
 if(end_doy == 366) end_doy <- 365 # Len's hopper "datetoday" function gives 366 even in non-leap years
 
 if(forecast_data == "PRISM"){
@@ -190,7 +199,7 @@ if(forecast_data == "PRISM"){
 
 if(forecast_data == "DAYMET"){
   # North America Daymet data
-  base_dir <- "/home/tyson/REPO/photovoltinism/daymet/"
+  base_dir <- "/home/tyson/REPO/ddrp-cohorts-v1/daymet_hi/"
   prism_dir <- paste0(base_dir, start_year)
   raster_crs <- "+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0,0,0" 
 }
@@ -211,6 +220,10 @@ cat("\nWORKING DIR: ", prism_dir, "\n")
 
 # output_dir <- paste0("/home/httpd/html/CAPS/",spp, "_cohorts")
 # output_dir <- paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir)
+if (server == "ento"){
+  output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
+                       out_dir,"/") # Tyson's ENTO
+}
 if (server == "grub"){
   output_dir <- paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
                        out_dir,"/") # Tyson's GRUB
@@ -253,6 +266,10 @@ cat(str_wrap(paste0("EXISTING OUTPUT DIR: ", output_dir,
 # open="wt")
 # msg <- file(paste0("/usr/local/dds/DDRP_B1/DDRP_results/", out_dir,
 #                    "/Logs_metadata/rmessages.txt"), open = "wt")
+if (server == "ento"){
+  msg <- file(paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
+                     out_dir,"/Logs_metadata/rmessages.txt"), open = "wt") #ENTO
+}
 if (server == "grub"){
   msg <- file(paste0("/home/tyson/REPO/ddrp-cohorts-v1/DDRP_results/",
                      out_dir,"/Logs_metadata/rmessages.txt"), open = "wt") #GRUB
@@ -600,8 +617,8 @@ template <- crop(raster(tminfiles[1]), REGION) # Template for cropping
 template[!is.na(template)] <- 0
 dataType(template) <- "INT2U"
 # crs <- crs("+proj=longlat +datum=NAD83 +no_defs +ellps=GRS80 +towgs84=0, 0, 0")
-crs <- crs(raster_crs)
-crs(template) <- crs
+crs1 <- crs(raster_crs)
+crs(template) <- crs1
 
 #### * If CONUS or EAST, split template into tiles (and run in parallel)
 # Benefit of tiles is lost for smaller regions, so these are not split
@@ -614,7 +631,7 @@ crs(template) <- crs
 # overloaded
 RegCluster(ncohort)
 
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   # Split template (2 pieces per side)
   tile_list <- SplitRas(template, ppside = 2, save = FALSE, plot = FALSE) 
   tile_n <- 1:length(tile_list) # How many tiles?
@@ -682,7 +699,7 @@ if (grepl("Windows", Sys.info()[1])) {
 
 # Split cohorts into smaller chunks for CONUS and EAST to avoid overloading 
 # memory when running in parallel. Three cohorts puts load up to ~13.
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   cohort_chunks <- split(1:ncohort, ceiling(1:length(1:ncohort)/2)) 
 } else {
   cohort_chunks <- split(1:ncohort, ceiling(1:length(1:ncohort)/5))
@@ -704,7 +721,7 @@ tryCatch(
     # If the region is CONUS or EAST, then both cohorts and tiles will be run in
     # parallel. To avoid overloading the server, mc.cores = 4 (for the 4 tiles,
     # which keeps load < 12. The run-time is approx 1.5-2.5 minutes.
-    if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+    if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
       # Total number of nodes is mc.cores * 2 because use mclapply twice in loop
       for (c in cohort_chunks) {
         cat("Running daily loop for cohorts", as.character(c), "\n", 
@@ -763,7 +780,7 @@ dir.create("Misc_output")
 
 #### * If CONUS or EAST, merge and delete tiles ####
 # If CONUS or EAST, merge the tiles
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   cat("\nMerging tiles for", region_param, "\n\n", 
       file = Model_rlogging, append = TRUE)
   cat("\nMerging tiles for", region_param, "\n")
@@ -813,7 +830,7 @@ if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
 
 # If CONUS or EAST, remove tile files, but first check that merged files 
 # exist for each type (e.g., Lifestage, NumGen, ...)
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   cat("\nDeleting tiles for", region_param, "\n\n", 
       file = Model_rlogging, append = TRUE)
   cat("\nDeleting tiles for", region_param, "\n")
@@ -911,7 +928,7 @@ mytheme <- theme(legend.text = element_text(size = rel(1)),
 
 ### * DDtotal and climate stress ####
 
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   DDtotal_brick <- brick("DDtotal_cohort1_all.tif")
 } else {
   DDtotal_brick <- brick("DDtotal_cohort1.tif")
@@ -1707,7 +1724,7 @@ if (exclusions_stressunits) {
 #### * Weight bricks for Diapause/Mismatch; save rasters and summary plots ####
 # beware that AttVolt, Voltinism, and Diapause need to be /1000 first
 if(do_photo){
-  if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+  if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
     template <- merge(template[[1]], template[[2]], template[[3]], template[[4]])
   }
   
@@ -2210,7 +2227,7 @@ cat("\nDone w/ final analyses and map production\n\n",
     sep = "")
 
 # Delete all output files from daily loop now that they have been processed
-if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
   unlink(list.files(pattern = glob2rx(paste0("*1_all.tif$"))))
 } else {
   unlink(list.files(pattern = glob2rx(paste0("*_cohort.tif$"))))

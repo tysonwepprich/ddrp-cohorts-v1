@@ -9,6 +9,8 @@ Assign_extent <- function(region_param = paste0(region_param)) {
   REGION <- switch(region_param,
                 "CONUSPLUS"    = extent(-142, -52, 24, 60),
                 "CONUS"        = extent(-125.0, -66.5, 24.54, 49.4),
+                "LOCO"         = extent(-119.5, -110, 29, 41),
+                "WESTPLUS"     = extent(-125, -93, 25.5, 50),
                 "WEST"         = extent(-125.0, -102, 31.1892, 49.4),
                 "EAST"         = extent(-106.8, -66.5, 24.54, 49.4),
                 "MIDWEST"      = extent(-104.2, -87, 30, 49.3),
@@ -345,7 +347,7 @@ DailyLoop <- function(cohort, tile_num, template) {
     stage_dd_cohort <- stage_dd[as.integer(cohort), ]  
     
     # Get temperature matrices for the day
-    if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+    if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
       tmax <- as.numeric(tmax_list[[tile_num]][[d]])
       tmin <- as.numeric(tmin_list[[tile_num]][[d]])
     } else {
@@ -878,7 +880,7 @@ DailyLoop <- function(cohort, tile_num, template) {
     for (i in 1:length(pem_list)) {
       pem_mat <- pem_list[[i]]
       pem_rast <- Mat_to_rast(pem_mat, ext, template)
-      if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+      if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
         SaveRaster(pem_rast, cohort, tile_num, names(pem_list[i]), "INT2U")
       } else {
         SaveRaster(pem_rast, cohort, NA, names(pem_list[i]), "INT2U")
@@ -925,7 +927,7 @@ DailyLoop <- function(cohort, tile_num, template) {
     Diapause_brick_1000 <- round(Diapause_brick * 1000)
     AttVolt_brick_1000 <- round(AttVolt_brick * 1000)
     # Voltinism_brick_1000 <- round(Voltinism_brick * 1000)
-    if (region_param %in% c("CONUS","EAST", "CONUSPLUS")) {
+    if (region_param %in% c("CONUS","EAST", "CONUSPLUS", "LOCO")) {
       SaveRaster(FullGen_brick, cohort, tile_num, "FullGen", "INT2S")
       SaveRaster(AttVolt_brick_1000, cohort, tile_num, "AttVolt", "INT2S")
       # SaveRaster(Voltinism_brick_1000, cohort, tile_num, "Voltinism", "INT2S")
@@ -1963,16 +1965,40 @@ Rast_Subs_Excl2 <- function(brk) {
 # Specifies the number of clusters to use for parallel computation based on 
 # the number of cohorts in the model, and whether tiles (for CONUS or EAST)
 # are also being run in parallel
-RegCluster <- function(ncohort) {
-  # If region is CONUS or EAST, need to leave some cores available 
-  # for parallel computing of tiles
-  if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
-    ncores <- 10
-  # If region is not CONUS or EAST (no tiles in parallel), then have more cores 
-  # to devote to cohorts
-  } else {
-    ncores <- 15
+RegCluster <- function(ncohort, server) {
+  if (ncohort <= 6){
+    ncores <- ncohort
+  }else{
+    ncores <- 6
   }
+  # # Ento less power
+  # if (server == "ento"){
+  #   if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
+  #     ncores <- 6
+  #     # If region is not CONUS or EAST (no tiles in parallel), then have more cores 
+  #     # to devote to cohorts
+  #   } else {
+  #     ncores <- 12
+  #   }
+  #   cl <<- makePSOCKcluster(ncores) # export to global environment
+  #   # If run is being done on Hopper, need to specify the library for each worker
+  #   if (Sys.info()["nodename"] == "ento.hort.oregonstate.edu") {
+  #     clusterEvalQ(cl, .libPaths("/home/tyson/R/x86_64-redhat-linux-gnu-library/3.6"))
+  #   }
+  #   registerDoParallel(cl)
+  #   return(cl)
+  # }else{
+  #   # If region is CONUS or EAST, need to leave some cores available 
+  #   # for parallel computing of tiles
+  #   if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
+  #     ncores <- 10
+  #     # If region is not CONUS or EAST (no tiles in parallel), then have more cores 
+  #     # to devote to cohorts
+  #   } else {
+  #     ncores <- 15
+  #   }
+  # }
+  
   cl <<- makePSOCKcluster(ncores) # export to global environment
   # If run is being done on Hopper, need to specify the library for each worker
   if (Sys.info()["nodename"] == "hopper.science.oregonstate.edu") {
@@ -1989,7 +2015,7 @@ RegCluster <- function(ncohort) {
 # outnam = output file name; datatype = number of digits int the 
 # output rasters (see "raster" library specificatoins)
 SaveRaster <- function(r, cohort, tile_num, outnam, datatype) {
-  if (region_param %in% c("CONUS", "EAST", "CONUSPLUS")) {
+  if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
     #daily_logFile <- paste0("Daily_loop_cohort", cohort, "_", tile_num, ".txt")
     writeRaster(r, file = paste0(outnam, "_cohort", cohort, "_tile", tile_num),
                 format = "GTiff",  datatype = datatype, overwrite = TRUE)
