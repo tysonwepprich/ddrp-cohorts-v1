@@ -7,7 +7,7 @@
 # Use switch() (works like a single use hash) 
 Assign_extent <- function(region_param = paste0(region_param)) {
   REGION <- switch(region_param,
-                "CONUSPLUS"    = extent(-142, -52, 24, 60),
+                "CONUSPLUS"    = extent(-131, -63, 24, 55),
                 "CONUS"        = extent(-125.0, -66.5, 24.54, 49.4),
                 "LOCO"         = extent(-119.5, -110, 29, 41),
                 "WESTPLUS"     = extent(-125, -93, 25.5, 50),
@@ -1965,48 +1965,22 @@ Rast_Subs_Excl2 <- function(brk) {
 # Specifies the number of clusters to use for parallel computation based on 
 # the number of cohorts in the model, and whether tiles (for CONUS or EAST)
 # are also being run in parallel
-RegCluster <- function(ncohort, server) {
-  if (ncohort <= 6){
-    ncores <- ncohort
-  }else{
-    ncores <- 6
+RegCluster <- function(ncores) {
+  if (grepl("Windows", Sys.info()[1])) {
+    cl <<- makePSOCKcluster(ncores)
+  } else {
+    cl <<- makeCluster(ncores)
   }
-  # # Ento less power
-  # if (server == "ento"){
-  #   if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
-  #     ncores <- 6
-  #     # If region is not CONUS or EAST (no tiles in parallel), then have more cores 
-  #     # to devote to cohorts
-  #   } else {
-  #     ncores <- 12
-  #   }
-  #   cl <<- makePSOCKcluster(ncores) # export to global environment
-  #   # If run is being done on Hopper, need to specify the library for each worker
-  #   if (Sys.info()["nodename"] == "ento.hort.oregonstate.edu") {
-  #     clusterEvalQ(cl, .libPaths("/home/tyson/R/x86_64-redhat-linux-gnu-library/3.6"))
-  #   }
-  #   registerDoParallel(cl)
-  #   return(cl)
-  # }else{
-  #   # If region is CONUS or EAST, need to leave some cores available 
-  #   # for parallel computing of tiles
-  #   if (region_param %in% c("CONUS", "EAST", "CONUSPLUS", "LOCO")) {
-  #     ncores <- 10
-  #     # If region is not CONUS or EAST (no tiles in parallel), then have more cores 
-  #     # to devote to cohorts
-  #   } else {
-  #     ncores <- 15
-  #   }
-  # }
   
-  cl <<- makePSOCKcluster(ncores) # export to global environment
   # If run is being done on Hopper, need to specify the library for each worker
   if (Sys.info()["nodename"] == "hopper.science.oregonstate.edu") {
     clusterEvalQ(cl, .libPaths("/usr/local/lib64/R/library/"))
   }
-  registerDoParallel(cl)
+  doParallel::registerDoParallel(cl)
+  #on.exit(stopCluster(cl))
   return(cl)
 }
+
 
 #### (18). SaveRaster: save rasters ####
 # Simply the "writeRaster" function from raster library but prints progress 

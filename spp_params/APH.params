@@ -8,18 +8,18 @@
   # P for APH represents late larval stage when photosensitive
   owstage    <- "OA"   # OW pupae in the soil; no true diapause   
   eggLDT     <- 6.9   
-  eggUDT     <- 32     # Unknown, only tested in lab up to 30
+  eggUDT     <- 30     # Unknown, only tested in lab up to 30
   larvaeLDT  <- 6.9     # same as egg stage
-  larvaeUDT  <- 32     # nominal upper dev. threshold
+  larvaeUDT  <- 30     # nominal upper dev. threshold
   pupaeLDT   <- 6.9   # same as egg stage
-  pupaeUDT   <- 32    
+  pupaeUDT   <- 30    
   adultLDT   <- 6.9   
-  adultUDT   <- 32     
-  eggDD      <- 136    
-  larvaeDD   <- 273   
-  pupDD      <- 136
+  adultUDT   <- 30     
+  eggDD      <- 147    
+  larvaeDD   <- 269 # Nymph 1-4 instars
+  pupDD      <- 132 # Nymph 5th instar
   OWadultDD  <- 306   
-  adultDD    <- 75     # time to complete pre-oviposition period
+  adultDD    <- 70     # time to complete pre-oviposition period
   calctype   <-"triangle" # similar to sine method upon which model was built
  
 # OW stage emergence parameters (DDRP v2 only)

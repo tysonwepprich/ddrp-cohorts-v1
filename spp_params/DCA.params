@@ -8,7 +8,7 @@
   owstage    <- "OA"   # OW pupae in the soil; no true diapause   
   eggLDT     <- 11.1   
   eggUDT     <- 40     # Unknown, only tested in lab up to 30
-  larvaeLDT  <- 11.1,40   # same as egg stage
+  larvaeLDT  <- 11.1   # same as egg stage
   larvaeUDT  <- 40     # nominal upper dev. threshold
   pupaeLDT   <- 11.1   # same as egg stage
   pupaeUDT   <- 40    

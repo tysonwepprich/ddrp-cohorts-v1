@@ -7,13 +7,13 @@
   stgorder   <- c("OA","E","L","P", "A", "F") # "F" is end-of-day placeholder in DDRP v1; stgorder changed to 1, 2, 3, 4, 5 in DDRP v2; Tyson's model has "TA" stage
   owstage    <- "OA"   # OW pupae in the soil; no true diapause   
   eggLDT     <- 10   
-  eggUDT     <- 37.8     # Unknown, only tested in lab up to 30
+  eggUDT     <- 30     # Unknown, only tested in lab up to 30
   larvaeLDT  <- 10     # same as egg stage
-  larvaeUDT  <- 37.8     # nominal upper dev. threshold
+  larvaeUDT  <- 30     # nominal upper dev. threshold
   pupaeLDT   <- 10   # same as egg stage
-  pupaeUDT   <- 37.8    
+  pupaeUDT   <- 30    
   adultLDT   <- 10   
-  adultUDT   <- 37.8     
+  adultUDT   <- 30     
   eggDD      <- 93.3    
   larvaeDD   <- 136.4   
   pupDD      <- 137.7   
